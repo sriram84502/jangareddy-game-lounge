@@ -28,3 +28,7 @@ use the editor.
   own key and store it in Secrets.
 - **Secrets.** Lovable manages them. Do not put secret values in the repo.
 <!-- LOVABLE:END -->
+
+## Project architecture
+- Keep shared session-pricing logic in a pure `src/lib/pricing.ts` module with unit tests so the booking form and saved estimates use the same rates.
+- Save public booking requests through validated TanStack server functions; keep customer records unreadable to public visitors and use the server-only database client for inserts.
