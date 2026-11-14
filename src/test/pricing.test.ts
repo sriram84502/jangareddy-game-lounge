@@ -2,20 +2,18 @@ import { describe, expect, it } from "vitest";
 
 import { calculateSessionPrice } from "@/lib/pricing";
 
-describe("session pricing per person", () => {
-  it("charges ₹100 per person for one hour", () => {
-    expect(calculateSessionPrice(1, 1)).toBe(100);
+describe("group session pricing", () => {
+  it.each([
+    [1, 1, 100], [1, 2, 180], [1, 3, 250],
+    [2, 1, 150], [2, 2, 270], [2, 3, 375],
+    [3, 1, 200], [3, 2, 360], [3, 3, 500],
+    [4, 1, 250], [4, 2, 450], [4, 3, 625],
+    [5, 1, 300], [5, 2, 540], [5, 3, 750],
+  ])("charges ₹%i for %i people for %i hour(s)", (people, hours, total) => {
+    expect(calculateSessionPrice(people, hours)).toBe(total);
   });
 
-  it("charges ₹180 per person for two hours", () => {
-    expect(calculateSessionPrice(1, 2)).toBe(180);
-  });
-
-  it("charges ₹250 per person for three hours", () => {
-    expect(calculateSessionPrice(1, 3)).toBe(250);
-  });
-
-  it("multiplies the per-person price by the group size", () => {
-    expect(calculateSessionPrice(4, 2)).toBe(720);
+  it("rejects group sizes without an approved rate", () => {
+    expect(() => calculateSessionPrice(6, 1)).toThrow(RangeError);
   });
 });
