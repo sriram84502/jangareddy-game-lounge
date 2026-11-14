@@ -15,7 +15,7 @@ const bookingRequestSchema = z.object({
       return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
     }),
   visitTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
-  partySize: z.number().int().min(1).max(20),
+  partySize: z.number().int().min(1).max(5),
   durationHours: z.union([z.literal(1), z.literal(2), z.literal(3)]),
   gameGenre: z.enum([
     "sports",
