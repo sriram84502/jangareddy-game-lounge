@@ -26,7 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { calculateSessionPrice, GROUP_SIZES, SESSION_DURATIONS, type PartySize, type SessionDuration } from "@/lib/pricing";
+import { calculateSessionPrice, GROUP_SIZES, SESSION_DURATIONS, type SessionDuration } from "@/lib/pricing";
 import { submitBookingRequest } from "@/lib/booking.functions";
 
 export const Route = createFileRoute("/")({
