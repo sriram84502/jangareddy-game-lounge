@@ -10,12 +10,17 @@ import {
   MapPin,
   MessageCircle,
   Phone,
-  Sparkles,
   Users,
 } from "lucide-react";
 
 import loungeImage from "@/assets/gaming-lounge.jpg";
 import friendzArenaLogo from "@/assets/friendz-arena-logo.png.asset.json";
+import adventurePoster from "@/assets/game-posters/adventure.jpg";
+import fightingPoster from "@/assets/game-posters/fighting.jpg";
+import multiplayerPoster from "@/assets/game-posters/multiplayer.jpg";
+import openWorldPoster from "@/assets/game-posters/open-world.jpg";
+import racingPoster from "@/assets/game-posters/racing.jpg";
+import sportsPoster from "@/assets/game-posters/sports.jpg";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -52,12 +57,12 @@ export const Route = createFileRoute("/")({
 });
 
 const gameGenres = [
-  { label: "Sports", detail: "Kick off with friends", icon: Sparkles },
-  { label: "Racing", detail: "Take the fast lane", icon: ArrowRight },
-  { label: "Fighting", detail: "Settle the score", icon: Gamepad2 },
-  { label: "Action & adventure", detail: "Find your next quest", icon: ArrowDown },
-  { label: "Open world", detail: "Explore at your pace", icon: MapPin },
-  { label: "Multiplayer", detail: "Make it a team game", icon: Users },
+  { label: "Sports", detail: "Kick off with friends", poster: sportsPoster, alt: "Football match under the stadium lights" },
+  { label: "Racing", detail: "Take the fast lane", poster: racingPoster, alt: "A racing car speeding through a neon-lit city" },
+  { label: "Fighting", detail: "Settle the score", poster: fightingPoster, alt: "Two masked fighters facing off in an arena" },
+  { label: "Action & adventure", detail: "Find your next quest", poster: adventurePoster, alt: "An explorer discovering a jungle ruin" },
+  { label: "Open world", detail: "Explore at your pace", poster: openWorldPoster, alt: "A rider overlooking a futuristic city" },
+  { label: "Multiplayer", detail: "Make it a team game", poster: multiplayerPoster, alt: "A team of sci-fi heroes ready to play together" },
 ];
 
 function Index() {
@@ -106,7 +111,7 @@ function Index() {
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <header className="border-b border-border/80">
+      <header className="sticky top-0 z-30 border-b border-border/80 bg-background/90 backdrop-blur-xl">
         <div className="mx-auto flex min-h-18 max-w-7xl items-center justify-between gap-5 px-5 py-3 sm:px-8">
           <a href="#top" className="flex min-w-0 items-center gap-3" aria-label="Gaming Lounge home">
             <img src={friendzArenaLogo.url} alt="Friendz Arena logo" className="size-12 shrink-0 rounded-full object-contain" />
@@ -215,12 +220,24 @@ function Index() {
             <h2 className="mt-3 font-display text-3xl font-bold sm:text-4xl">What are you playing today?</h2>
             <p className="mt-4 leading-7 text-muted-foreground">Choose a genre when you request a session. The shop can confirm specific titles when they get in touch.</p>
           </div>
-          <div className="mt-9 grid gap-x-8 sm:grid-cols-2 lg:grid-cols-3">
-            {gameGenres.map(({ label, detail, icon: Icon }) => (
-              <div key={label} className="flex items-start gap-4 border-t border-border py-5">
-                <span className="flex size-11 shrink-0 items-center justify-center rounded-md bg-secondary text-primary"><Icon aria-hidden="true" className="size-5" /></span>
-                <span><span className="block font-display text-base font-bold">{label}</span><span className="mt-1 block text-sm text-muted-foreground">{detail}</span></span>
-              </div>
+          <div className="mt-9 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 xl:grid-cols-6">
+            {gameGenres.map(({ label, detail, poster, alt }, index) => (
+              <article key={label} className="group relative isolate aspect-[3/4] overflow-hidden rounded-md border border-border bg-card">
+                <img
+                  src={poster}
+                  alt={alt}
+                  width={365}
+                  height={500}
+                  loading="lazy"
+                  className="absolute inset-0 -z-20 size-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
+                <div aria-hidden="true" className="absolute inset-0 -z-10 bg-gradient-to-t from-background via-background/20 to-transparent" />
+                <div className="absolute inset-x-0 bottom-0 p-3 sm:p-4">
+                  <p className="mb-1 font-display text-[10px] font-bold uppercase text-primary">Genre {String(index + 1).padStart(2, "0")}</p>
+                  <h3 className="font-display text-sm font-bold leading-snug sm:text-base">{label}</h3>
+                  <p className="mt-1 text-xs text-foreground/80">{detail}</p>
+                </div>
+              </article>
             ))}
           </div>
         </div>
