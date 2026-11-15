@@ -17,5 +17,10 @@ export function calculateSessionPrice(partySize: number, durationHours: SessionD
     throw new RangeError("Session pricing is available for groups of 1 to 5 people");
   }
 
-  return GROUP_SESSION_PRICES[partySize][durationHours];
+  const price = GROUP_SESSION_PRICES[partySize]?.[durationHours];
+  if (price === undefined) {
+    throw new RangeError("No session price is configured for this group");
+  }
+
+  return price;
 }
