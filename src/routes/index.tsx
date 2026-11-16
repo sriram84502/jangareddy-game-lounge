@@ -14,6 +14,9 @@ import {
 
 import loungeImage from "@/assets/gaming-lounge.jpg";
 import friendzArenaLogo from "@/assets/friendz-arena-logo.png.asset.json";
+import gameCollectionPhoto from "@/assets/game-collection/game-library.webp.asset.json";
+import gtaViCover from "@/assets/game-collection/gta-vi-cover.png.asset.json";
+import gameCoverGallery from "@/assets/game-collection/game-library-grid.png.asset.json";
 import adventurePoster from "@/assets/game-posters/adventure.jpg";
 import fightingPoster from "@/assets/game-posters/fighting.jpg";
 import multiplayerPoster from "@/assets/game-posters/multiplayer.jpg";
@@ -238,6 +241,55 @@ function Index() {
                 </div>
               </article>
             ))}
+          </div>
+
+          <div className="mt-16 border-t border-border pt-10">
+            <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
+              <div>
+                <p className="font-display text-xs font-bold uppercase text-primary">From the shelves</p>
+                <h3 className="mt-2 font-display text-2xl font-bold sm:text-3xl">Games at the arena</h3>
+              </div>
+              <p className="max-w-md text-sm leading-6 text-muted-foreground">A look at the PS5 games available to play at Friendz Arena.</p>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-[minmax(0,1.45fr)_minmax(14rem,0.55fr)]">
+              <figure className="overflow-hidden rounded-md border border-border bg-card">
+                <img
+                  src={gameCollectionPhoto.url}
+                  alt="Photo of the PS5 game cases available at Friendz Arena"
+                  width={1677}
+                  height={1920}
+                  loading="lazy"
+                  className="max-h-[44rem] w-full object-contain object-top"
+                />
+                <figcaption className="border-t border-border px-4 py-3 text-sm text-muted-foreground">PS5 game collection</figcaption>
+              </figure>
+
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-1">
+                <figure className="overflow-hidden rounded-md border border-border bg-card">
+                  <img
+                    src={gtaViCover.url}
+                    alt="Grand Theft Auto VI PS5 game cover"
+                    width={600}
+                    height={600}
+                    loading="lazy"
+                    className="aspect-square w-full object-contain"
+                  />
+                  <figcaption className="border-t border-border px-3 py-2 text-sm text-muted-foreground">Grand Theft Auto VI</figcaption>
+                </figure>
+                <figure className="overflow-hidden rounded-md border border-border bg-card">
+                  <img
+                    src={gameCoverGallery.url}
+                    alt="A gallery of PS5 game covers available at Friendz Arena"
+                    width={422}
+                    height={727}
+                    loading="lazy"
+                    className="max-h-[28rem] w-full object-contain object-top"
+                  />
+                  <figcaption className="border-t border-border px-3 py-2 text-sm text-muted-foreground">More games in the collection</figcaption>
+                </figure>
+              </div>
+            </div>
           </div>
         </div>
       </section>
