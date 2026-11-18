@@ -213,6 +213,8 @@ const ARENA_STATIONS = [
     featuredGame: "EA SPORTS FC 24",
     secondaryGame: "Cricket 24 · WWE 2K24",
     cover: "/games/ea-sports-fc-24.jpg",
+    character: "/hero-eafc-breakout.png",
+    characterAlt: "EA Sports FC Haaland Breakout",
     genre: "sports",
     tag: "Sports & Cricket",
     badge: "1v1 & 2v2 Battle",
@@ -225,6 +227,8 @@ const ARENA_STATIONS = [
     featuredGame: "GTA VI & GTA V",
     secondaryGame: "4K 60FPS Ray Tracing",
     cover: "/games/gta-6.jpg",
+    character: "/hero-gta6-breakout.png",
+    characterAlt: "GTA VI Lucia Breakout",
     genre: "open-world",
     tag: "Open World Action",
     badge: "🔥 Day 1 on PS5",
@@ -237,6 +241,8 @@ const ARENA_STATIONS = [
     featuredGame: "TEKKEN 8",
     secondaryGame: "Mortal Kombat 11 · SFV",
     cover: "/games/tekken-8.jpg",
+    character: "/hero-tekken-breakout.png",
+    characterAlt: "Tekken 8 Jin Kazama Breakout",
     genre: "fighting",
     tag: "Competitive Fighting",
     badge: "Zero-Lag 60FPS",
@@ -249,6 +255,8 @@ const ARENA_STATIONS = [
     featuredGame: "Marvel's Spider-Man 2",
     secondaryGame: "God of War · Tsushima",
     cover: "/games/marvels-spider-man-2.jpg",
+    character: "/hero-spiderman-breakout.png",
+    characterAlt: "Marvel Spider-Man Breakout",
     genre: "action-adventure",
     tag: "Action & Adventure",
     badge: "Cinematic 4K HDR",
@@ -257,13 +265,15 @@ const ARENA_STATIONS = [
   },
   {
     number: "05",
-    name: "Co-op Squad Lounge",
-    featuredGame: "It Takes Two",
-    secondaryGame: "A Way Out · Overcooked",
-    cover: "/games/it-takes-two.jpg",
-    genre: "multiplayer",
-    tag: "Multiplayer Co-op",
-    badge: "2–4 Friends Fun",
+    name: "PlayStation Blockbusters",
+    featuredGame: "God of War Ragnarök",
+    secondaryGame: "It Takes Two · Overcooked",
+    cover: "/games/god-of-war-ragnarok.jpg",
+    character: "/hero-kratos-breakout.png",
+    characterAlt: "Kratos God of War Breakout",
+    genre: "action-adventure",
+    tag: "Co-op & Action",
+    badge: "Boss Battle Ready",
     accentColor: "border-amber-500/40 text-amber-400 bg-amber-950/30",
     glowColor: "from-amber-500/20 to-transparent",
   },
@@ -1249,37 +1259,48 @@ function Index() {
               </div>
             </div>
 
-            {/* Right Arched Portal Window (Matching Reference Dome Character) */}
-            <div className="lg:col-span-5">
-              <div className="relative mx-auto max-w-sm">
-                <div className="relative aspect-[3/4] w-full overflow-hidden rounded-t-[130px] rounded-b-3xl border-2 border-fuchsia-500/40 bg-gradient-to-b from-fuchsia-900/40 via-[#0E1538] to-[#070B1E] p-3 shadow-2xl shadow-fuchsia-950/70">
+            {/* Right Arched Portal Window (with 3D Character Popout on Hover) */}
+            <div className="lg:col-span-5 pt-8 sm:pt-14">
+              <div className="group relative mx-auto max-w-sm cursor-pointer">
+                <div className="relative aspect-[3/4] w-full rounded-t-[130px] rounded-b-3xl border-2 border-fuchsia-500/40 bg-gradient-to-b from-fuchsia-900/40 via-[#0E1538] to-[#070B1E] p-3 shadow-2xl shadow-fuchsia-950/70 transition-all duration-500 group-hover:border-fuchsia-400 group-hover:shadow-fuchsia-500/30">
+                  {/* Background container: stays strictly clipped within the card frame */}
                   <div className="relative size-full overflow-hidden rounded-t-[120px] rounded-b-2xl bg-black">
                     <img
                       src="/games/gta-6.jpg"
                       alt="Grand Theft Auto VI Lucia and Jason"
-                      className="size-full object-cover object-center"
+                      className="size-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-110 group-hover:brightness-75"
                       loading="lazy"
                     />
                     <div
                       aria-hidden="true"
-                      className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent"
+                      className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent"
                     />
 
                     {/* Corner Badge */}
-                    <div className="absolute top-4 left-1/2 -translate-x-1/2 rounded-full bg-fuchsia-600 px-3.5 py-1 font-display text-[10px] font-black uppercase tracking-wider text-white shadow-lg">
+                    <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 rounded-full bg-fuchsia-600 px-3.5 py-1 font-display text-[10px] font-black uppercase tracking-wider text-white shadow-lg">
                       Day 1 on PS5
                     </div>
+                  </div>
 
-                    {/* Bottom Details */}
-                    <div className="absolute inset-x-0 bottom-0 p-5 text-center">
-                      <p className="font-display text-xs font-bold uppercase tracking-widest text-fuchsia-400">
-                        Rockstar Games
-                      </p>
-                      <h3 className="font-display text-xl font-black uppercase text-white">
-                        Grand Theft Auto VI
-                      </h3>
-                      <p className="mt-1 text-xs text-white/80">Vice City · State of Leonida</p>
-                    </div>
+                  {/* 3D Popout GTA VI Lucia Character */}
+                  <div className="pointer-events-none absolute -top-10 sm:-top-16 inset-x-0 h-full z-20 flex items-end justify-center overflow-visible">
+                    <img
+                      src="/hero-gta6-breakout.png"
+                      alt="Grand Theft Auto VI Lucia Breakout"
+                      className="max-h-[108%] w-auto max-w-none object-contain drop-shadow-[0_20px_30px_rgba(0,0,0,0.9)] transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:-translate-y-6 sm:group-hover:-translate-y-10 group-hover:scale-115 filter saturate-110"
+                      loading="lazy"
+                    />
+                  </div>
+
+                  {/* Bottom Details Shelf (in front of character) */}
+                  <div className="relative z-30 mt-[-70px] p-5 text-center rounded-b-2xl bg-gradient-to-t from-black via-black/90 to-transparent backdrop-blur-sm">
+                    <p className="font-display text-xs font-bold uppercase tracking-widest text-fuchsia-400">
+                      Rockstar Games
+                    </p>
+                    <h3 className="font-display text-xl font-black uppercase text-white">
+                      Grand Theft Auto VI
+                    </h3>
+                    <p className="mt-1 text-xs text-white/80">Vice City · State of Leonida</p>
                   </div>
                 </div>
               </div>
@@ -1310,48 +1331,61 @@ function Index() {
             </p>
           </div>
 
-          {/* 5 Dome-Topped Vertical Cards */}
-          <div className="mt-12 grid grid-cols-2 gap-3.5 sm:grid-cols-3 lg:grid-cols-5 sm:gap-5">
+          {/* 5 Dome-Topped Vertical Cards with 3D Popout Character on Hover */}
+          <div className="mt-12 grid grid-cols-2 gap-3.5 sm:grid-cols-3 lg:grid-cols-5 sm:gap-5 pt-8 sm:pt-14">
             {ARENA_STATIONS.map((station) => (
               <div
                 key={station.number}
-                className={`group relative flex flex-col overflow-hidden rounded-t-[50px] rounded-b-2xl border ${station.accentColor} p-2.5 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-2xl`}
+                className={`group relative flex flex-col rounded-t-[50px] rounded-b-2xl border ${station.accentColor} p-2.5 transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:shadow-cyan-500/20`}
               >
-                {/* Dome Image Container */}
+                {/* 1. Dome Image Container (BACKGROUND WITHIN CARD: strictly overflow-hidden) */}
                 <div className="relative aspect-[3/4] w-full overflow-hidden rounded-t-[40px] rounded-b-xl bg-[#070B1E]">
+                  {/* Background game poster / scenery: stays strictly clipped within the rounded card */}
                   <img
                     src={station.cover}
                     alt={station.name}
-                    className="size-full object-cover object-center transition-transform duration-500 group-hover:scale-105"
+                    className="size-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-110 group-hover:brightness-75"
                     loading="lazy"
                   />
                   <div
                     aria-hidden="true"
-                    className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent"
+                    className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent"
                   />
 
                   {/* Rig Number Badge */}
-                  <span className="absolute top-2.5 right-2.5 rounded-full bg-black/80 px-2 py-0.5 font-display text-[10px] font-bold text-white backdrop-blur-md">
+                  <span className="absolute top-2.5 right-2.5 z-10 rounded-full bg-black/80 px-2 py-0.5 font-display text-[10px] font-bold text-white backdrop-blur-md">
                     RIG {station.number}
                   </span>
 
                   {/* Bottom Rig Tag */}
-                  <div className="absolute inset-x-0 bottom-0 p-2.5">
+                  <div className="absolute inset-x-0 bottom-0 z-10 p-2.5">
                     <span className="rounded bg-black/75 px-1.5 py-0.5 font-display text-[9px] font-bold uppercase tracking-wider text-white backdrop-blur-sm">
                       {station.badge}
                     </span>
                   </div>
                 </div>
 
-                {/* Card Text Content */}
-                <div className="flex flex-1 flex-col p-3 text-center">
-                  <h3 className="font-display text-sm font-bold text-white group-hover:text-cyan-400 transition-colors">
+                {/* 2. 3D Pop-Out Character (Only character pops out of the card on hover) */}
+                {station.character && (
+                  <div className="pointer-events-none absolute -top-8 sm:-top-12 inset-x-0 h-[88%] z-20 flex items-end justify-center overflow-visible">
+                    <img
+                      src={station.character}
+                      alt={station.characterAlt || station.name}
+                      className="max-h-[105%] w-auto max-w-[125%] object-contain drop-shadow-[0_15px_20px_rgba(0,0,0,0.85)] transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:-translate-y-5 sm:group-hover:-translate-y-8 group-hover:scale-120 filter saturate-105"
+                      loading="lazy"
+                    />
+                  </div>
+                )}
+
+                {/* 3. Card Text Content Shelf (z-30 covers character lower body so it emerges from the frame) */}
+                <div className="relative z-30 flex flex-1 flex-col p-3 text-center bg-gradient-to-b from-[#0E1538] to-[#070B1E] rounded-b-2xl border-t border-white/10 mt-1">
+                  <h3 className="font-display text-sm font-bold text-white group-hover:text-[#FFB800] transition-colors truncate">
                     {station.name}
                   </h3>
-                  <p className="mt-1 text-xs font-semibold text-white/90">
+                  <p className="mt-1 text-xs font-semibold text-white/90 truncate">
                     {station.featuredGame}
                   </p>
-                  <p className="mt-0.5 text-[11px] text-muted-foreground">{station.secondaryGame}</p>
+                  <p className="mt-0.5 text-[11px] text-muted-foreground truncate">{station.secondaryGame}</p>
 
                   <div className="mt-auto pt-3">
                     <button
@@ -1359,7 +1393,7 @@ function Index() {
                       onClick={() =>
                         handleSelectStation(station.name, station.featuredGame, station.genre)
                       }
-                      className="w-full rounded-md border border-white/20 bg-white/5 py-1.5 font-display text-[10px] font-bold uppercase tracking-wider text-white transition-all hover:bg-[#FFB800] hover:text-black hover:border-[#FFB800]"
+                      className="w-full rounded-md border border-white/20 bg-white/5 py-1.5 font-display text-[10px] font-bold uppercase tracking-wider text-white transition-all hover:bg-[#FFB800] hover:text-black hover:border-[#FFB800] cursor-pointer"
                     >
                       Select Rig
                     </button>
