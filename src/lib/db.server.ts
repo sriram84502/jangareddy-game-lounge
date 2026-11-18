@@ -1,13 +1,26 @@
 import fs from "node:fs";
 import path from "node:path";
+
+// Node ESM compatibility shim for Emscripten sql.js
+if (typeof (globalThis as any).__dirname === "undefined") {
+  (globalThis as any).__dirname = process.cwd();
+}
+if (typeof (globalThis as any).__filename === "undefined") {
+  (globalThis as any).__filename = path.join(process.cwd(), "index.js");
+}
+
 import initSqlJs, { type Database as SqlJsDatabase } from "sql.js";
 
 import { GAMES_LIST } from "@/data/games";
 import { GROUP_SIZES, SESSION_DURATIONS, calculateSessionPrice } from "@/lib/pricing";
+import { SQL_WASM_BASE64 } from "@/lib/sql-wasm-data.server";
 
 let _db: SqlJsDatabase | null = null;
 let _dbMtime = 0;
-const DB_DIR = path.resolve(process.cwd(), "data");
+const DB_DIR =
+  process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.NODE_ENV === "production"
+    ? path.resolve(process.env.TMPDIR || "/tmp", "friendz_data")
+    : path.resolve(process.cwd(), "data");
 const DB_PATH = path.resolve(DB_DIR, "friendz_arena.sqlite");
 
 // PS5 Station Rig Definitions (Single Source of Truth)
@@ -79,9 +92,13 @@ export function getIndianTimeNowMinutes(): number {
   }
 }
 
-// Ensure data folder exists
-if (!fs.existsSync(DB_DIR)) {
-  fs.mkdirSync(DB_DIR, { recursive: true });
+// Ensure data folder exists safely across serverless & local environments
+try {
+  if (!fs.existsSync(DB_DIR)) {
+    fs.mkdirSync(DB_DIR, { recursive: true });
+  }
+} catch (err) {
+  console.warn("[SQL Database] Notice: running with ephemeral in-memory database storage.");
 }
 
 export function saveDatabaseToFile(db: SqlJsDatabase): void {
@@ -97,7 +114,9 @@ export function saveDatabaseToFile(db: SqlJsDatabase): void {
 }
 
 export async function getSqlDatabase(): Promise<SqlJsDatabase> {
-  const SQL = await initSqlJs();
+  const SQL = await initSqlJs({
+    wasmBinary: Buffer.from(SQL_WASM_BASE64, "base64"),
+  });
 
   if (fs.existsSync(DB_PATH)) {
     const stat = fs.statSync(DB_PATH);
