@@ -1913,24 +1913,45 @@ function Index() {
       </section>
 
       {/* Booking Form Section */}
-      <section id="book" className="scroll-mt-8 border-b border-white/10 bg-[#070B1E] py-16 sm:py-24">
-        <div className="mx-auto grid max-w-7xl gap-10 px-5 sm:px-8 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-14">
-          <div className="min-w-0">
+      <section id="book" className="scroll-mt-8 border-b border-white/10 bg-[#070B1E] py-12 sm:py-24 w-full max-w-full overflow-hidden">
+        <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-8 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-14 w-full max-w-full">
+          <div className="min-w-0 w-full max-w-full">
             <p className="font-display text-xs font-bold uppercase tracking-widest text-[#FFB800]">
               YOUR NEXT SESSION
             </p>
-            <h2 className="mt-3 font-display text-3xl font-black uppercase tracking-tight text-white sm:text-4xl">
+            <h2 className="mt-2 sm:mt-3 font-display text-2xl sm:text-4xl font-black uppercase tracking-tight text-white">
               Request A Booking
             </h2>
-            <p className="mt-4 max-w-2xl leading-relaxed text-muted-foreground">
+            <p className="mt-2 sm:mt-4 max-w-2xl text-xs sm:text-sm leading-relaxed text-muted-foreground">
               Send your preferred time and we’ll confirm station availability with you. Your request
               is not a confirmed reservation yet.
             </p>
 
+            {/* Mobile Real-Time Price Strip (Visible only on mobile / tablets <lg) */}
+            <div className="mt-6 lg:hidden flex items-center justify-between rounded-2xl border border-amber-500/30 bg-gradient-to-r from-amber-500/15 via-[#0E1538] to-cyan-500/15 p-4 shadow-xl">
+              <div className="flex items-center gap-3">
+                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-[#FFB800] text-black font-black text-sm shadow-md">
+                  ₹
+                </div>
+                <div className="min-w-0">
+                  <span className="block font-display text-[11px] font-black uppercase tracking-wider text-[#FFB800]">
+                    Estimated Rate
+                  </span>
+                  <span className="block text-xs text-muted-foreground truncate">
+                    {partySize} {partySize === 1 ? "Player" : "Players"} · {durationHours} {durationHours === 1 ? "Hour" : "Hours"}
+                  </span>
+                </div>
+              </div>
+              <div className="text-right shrink-0">
+                <span className="font-display text-2xl font-black text-[#FFB800]">₹{total}</span>
+                <span className="block text-[9px] text-emerald-400 font-bold uppercase tracking-wider">Group Total</span>
+              </div>
+            </div>
+
             {/* Selected game alert banner */}
             {selectedGameTitle && (
               <div
-                className={`mt-6 flex flex-col gap-2 rounded-xl border p-4 text-sm ${
+                className={`mt-6 flex flex-col gap-2 rounded-xl border p-4 text-xs sm:text-sm w-full max-w-full break-words ${
                   selectedGameTitle.includes("Grand Theft Auto VI")
                     ? "border-fuchsia-500/50 bg-fuchsia-950/30 text-white"
                     : "border-cyan-500/40 bg-cyan-950/20 text-white"
@@ -1939,16 +1960,16 @@ function Index() {
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-2">
                     <Sparkles
-                      className={`size-4 ${
+                      className={`size-4 shrink-0 ${
                         selectedGameTitle.includes("Grand Theft Auto VI")
                           ? "text-fuchsia-400"
                           : "text-cyan-400"
                       }`}
                     />
-                    <span>
+                    <span className="truncate max-w-[220px]">
                       {selectedGameTitle.includes("Grand Theft Auto VI")
-                        ? "Selected Launch Slot:"
-                        : "Selected game to play:"}{" "}
+                        ? "Launch Slot:"
+                        : "Selected game:"}{" "}
                       <strong
                         className={
                           selectedGameTitle.includes("Grand Theft Auto VI")
@@ -1963,7 +1984,7 @@ function Index() {
                   <button
                     type="button"
                     onClick={() => setSelectedGameTitle("")}
-                    className="text-xs text-muted-foreground hover:text-white"
+                    className="text-xs text-muted-foreground hover:text-white shrink-0 cursor-pointer ml-2"
                     aria-label="Remove selected game"
                   >
                     Clear
@@ -2015,15 +2036,15 @@ function Index() {
                 </div>
               </div>
 
-              <fieldset className="space-y-2">
+              <fieldset className="space-y-2 w-full max-w-full">
                 <legend className="text-xs font-bold uppercase tracking-wider text-white">
                   Preferred Way to Reach You
                 </legend>
-                <div className="inline-flex gap-1.5 rounded-xl border border-white/10 bg-[#0E1538] p-1.5">
+                <div className="grid grid-cols-2 gap-2 max-w-xs rounded-xl border border-white/10 bg-[#0E1538] p-1.5">
                   <button
                     type="button"
                     onClick={() => setContactMethod("whatsapp")}
-                    className={`rounded-lg px-4 py-1.5 font-display text-xs font-bold transition-all ${
+                    className={`rounded-lg py-2 font-display text-xs font-bold transition-all text-center cursor-pointer ${
                       contactMethod === "whatsapp"
                         ? "bg-[#FFB800] text-black shadow"
                         : "text-muted-foreground hover:text-white"
@@ -2034,7 +2055,7 @@ function Index() {
                   <button
                     type="button"
                     onClick={() => setContactMethod("phone")}
-                    className={`rounded-lg px-4 py-1.5 font-display text-xs font-bold transition-all ${
+                    className={`rounded-lg py-2 font-display text-xs font-bold transition-all text-center cursor-pointer ${
                       contactMethod === "phone"
                         ? "bg-[#FFB800] text-black shadow"
                         : "text-muted-foreground hover:text-white"
@@ -2046,11 +2067,11 @@ function Index() {
               </fieldset>
 
               {/* Live PS5 Slot Availability Indicator */}
-              <div className="rounded-2xl border border-white/10 bg-black/40 p-4 backdrop-blur-md">
-                <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="rounded-2xl border border-white/10 bg-black/40 p-3.5 sm:p-4 backdrop-blur-md w-full max-w-full">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5">
                   <div className="flex items-center gap-2">
                     <span
-                      className={`inline-flex size-2.5 rounded-full ${
+                      className={`inline-flex size-2.5 shrink-0 rounded-full ${
                         checkingAvailability
                           ? "bg-amber-400 animate-pulse"
                           : availability?.isAvailable
@@ -2058,7 +2079,7 @@ function Index() {
                           : "bg-red-500"
                       }`}
                     />
-                    <span className="font-display text-xs font-bold uppercase tracking-wider text-white">
+                    <span className="font-display text-[11px] sm:text-xs font-bold uppercase tracking-wider text-white">
                       Live PS5 Rig & Game Availability
                     </span>
                   </div>
@@ -2066,19 +2087,26 @@ function Index() {
                     <span className="text-xs text-muted-foreground animate-pulse">Checking slot & game copies...</span>
                   ) : availability ? (
                     <span
-                      className={`rounded-full px-2.5 py-0.5 text-xs font-black uppercase tracking-wider ${
+                      className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] sm:text-xs font-black uppercase tracking-wider leading-snug break-words ${
                         availability.available && availability.gameAvailable
                           ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
                           : "bg-red-500/20 text-red-300 border border-red-500/40"
                       }`}
                     >
-                      {availability.available && availability.gameAvailable
-                        ? availability.isGta6
-                          ? `🟢 Rig Free & GTA VI Disc (${availability.gameCopiesLeft} of 2 Discs Free)`
-                          : `🟢 ${availability.availableRigsCount} of 5 Rigs Free (PlayStation Plus Deluxe on All Rigs)`
-                        : availability.isGta6 && !availability.gameAvailable
-                        ? "⚠️ 2 of 2 GTA VI Discs Booked for this slot"
-                        : "🔴 All 5 Stations Booked"}
+                      {availability.available && availability.gameAvailable ? (
+                        availability.isGta6 ? (
+                          <span>🟢 Rig Free · GTA VI Disc ({availability.gameCopiesLeft}/2)</span>
+                        ) : (
+                          <span>
+                            🟢 {availability.availableRigsCount} of 5 Rigs Free{" "}
+                            <span className="hidden sm:inline">(PS Plus Deluxe on All Rigs)</span>
+                          </span>
+                        )
+                      ) : availability.isGta6 && !availability.gameAvailable ? (
+                        <span>⚠️ 2/2 GTA VI Discs Booked</span>
+                      ) : (
+                        <span>🔴 All 5 Stations Booked</span>
+                      )}
                     </span>
                   ) : null}
                 </div>
@@ -2087,13 +2115,13 @@ function Index() {
                 </p>
                 {selectedGameTitle && (
                   <div className="mt-2 flex items-center justify-between border-t border-white/10 pt-2 text-[11px]">
-                    <span className="text-white/80">
+                    <span className="text-white/80 truncate max-w-[220px]">
                       Selected Game: <strong className="text-cyan-300">{selectedGameTitle}</strong>
                     </span>
                     <button
                       type="button"
                       onClick={() => setSelectedGameTitle("")}
-                      className="text-muted-foreground hover:text-white"
+                      className="text-muted-foreground hover:text-white shrink-0 ml-2 cursor-pointer"
                     >
                       Reset selection
                     </button>
@@ -2102,8 +2130,8 @@ function Index() {
               </div>
 
               {/* Playo-Style Date Selection Strip */}
-              <div className="space-y-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="space-y-3 w-full max-w-full">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   <Label className="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-2">
                     <CalendarIcon className="size-3.5 text-[#FFB800]" />
                     Select Date
@@ -2120,7 +2148,7 @@ function Index() {
                 </div>
 
                 {/* Horizontal Date Cards Carousel (Playo Style) */}
-                <div className="flex w-full max-w-full items-center gap-2 overflow-x-auto pb-2 scrollbar-thin">
+                <div className="flex w-full max-w-full items-center gap-2 overflow-x-auto pb-2 pt-1 scrollbar-thin">
                   {dateOptions.map((opt) => {
                     const isSelected = visitDate === opt.iso;
                     return (
@@ -2128,7 +2156,7 @@ function Index() {
                         key={opt.iso}
                         type="button"
                         onClick={() => setVisitDate(opt.iso)}
-                        className={`flex min-w-[76px] flex-col items-center rounded-2xl border px-3 py-2 text-center transition-all cursor-pointer ${
+                        className={`shrink-0 flex min-w-[70px] sm:min-w-[76px] flex-col items-center rounded-2xl border px-2.5 sm:px-3 py-2 text-center transition-all cursor-pointer ${
                           isSelected
                             ? "border-[#FFB800] bg-gradient-to-b from-[#FFB800]/25 to-[#FFB800]/10 text-white shadow-lg shadow-amber-500/20 scale-[1.03] ring-2 ring-[#FFB800]"
                             : "border-white/10 bg-[#0E1538] text-white/70 hover:border-white/30 hover:text-white"
@@ -2137,7 +2165,7 @@ function Index() {
                         <span className={`text-[10px] font-bold tracking-wider ${isSelected ? "text-[#FFB800]" : "text-muted-foreground"}`}>
                           {opt.dayName}
                         </span>
-                        <span className="font-display text-xl font-black text-white">{opt.dateNum}</span>
+                        <span className="font-display text-lg sm:text-xl font-black text-white">{opt.dateNum}</span>
                         <span className="text-[10px] text-muted-foreground">{opt.monthStr}</span>
                       </button>
                     );
@@ -2147,17 +2175,19 @@ function Index() {
               </div>
 
               {/* Playo-Style Time Slot Grid for Selected Date */}
-              <div className="space-y-3">
-                <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="space-y-3 w-full max-w-full">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   <Label className="text-xs font-bold uppercase tracking-wider text-white flex items-center gap-2">
                     <Clock3 className="size-3.5 text-[#23C8F3]" />
-                    Available Time Slots on{" "}
-                    <span className="text-[#FFB800]">
-                      {new Date(visitDate + "T00:00:00").toLocaleDateString("en-IN", {
-                        weekday: "short",
-                        day: "numeric",
-                        month: "short",
-                      })}
+                    <span>
+                      Available Slots on{" "}
+                      <span className="text-[#FFB800]">
+                        {new Date(visitDate + "T00:00:00").toLocaleDateString("en-IN", {
+                          weekday: "short",
+                          day: "numeric",
+                          month: "short",
+                        })}
+                      </span>
                     </span>
                   </Label>
                   <div className="flex items-center gap-3 text-[11px]">
@@ -2180,7 +2210,7 @@ function Index() {
                     ))}
                   </div>
                 ) : daySlots.length > 0 ? (
-                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2 w-full max-w-full">
                     {daySlots.map((slot) => {
                       const isSelected = visitTime === slot.time;
                       const isAvailable = slot.isAvailable;
@@ -2207,7 +2237,7 @@ function Index() {
                           )}
                           <span className="font-display text-xs font-black text-white">{slot.label}</span>
                           <span
-                            className={`mt-0.5 text-[9px] font-bold ${
+                            className={`mt-0.5 text-[9px] font-bold truncate max-w-full ${
                               slot.isPast
                                 ? "text-muted-foreground"
                                 : slot.isFull
@@ -2223,7 +2253,7 @@ function Index() {
                               ? "Full (0/5)"
                               : slot.isGta6
                               ? `${slot.gameCopiesLeft}/2 Discs`
-                              : `${slot.availableRigsCount} Rigs Free`}
+                              : `${slot.availableRigsCount} Free`}
                           </span>
                         </button>
                       );
@@ -2361,7 +2391,7 @@ function Index() {
                 </div>
               )}
 
-              <div className="flex flex-wrap items-center gap-3 pt-2">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2 w-full">
                 {/* One-Tap WhatsApp Instant Booking */}
                 <a
                   href={`https://wa.me/918498833389?text=${encodeURIComponent(
@@ -2375,7 +2405,7 @@ function Index() {
                   )}`}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-2 rounded-xl border border-emerald-500/50 bg-emerald-950/60 px-5 py-3.5 font-display text-xs font-black uppercase tracking-wider text-emerald-300 hover:bg-emerald-900/60 transition-all shadow-lg"
+                  className="flex w-full sm:w-auto items-center justify-center gap-2 rounded-xl border border-emerald-500/50 bg-emerald-950/60 px-5 py-3.5 font-display text-xs font-black uppercase tracking-wider text-emerald-300 hover:bg-emerald-900/60 transition-all shadow-lg text-center"
                 >
                   <MessageCircle className="size-4 fill-current text-emerald-400" />
                   <span>One-Tap WhatsApp</span>
@@ -2384,7 +2414,7 @@ function Index() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="btn-chamfer inline-flex items-center gap-2 bg-[#FFB800] px-8 py-3.5 font-display text-xs font-black uppercase tracking-wider text-black shadow-xl shadow-amber-500/20 disabled:opacity-50"
+                  className="btn-chamfer flex w-full sm:w-auto items-center justify-center gap-2 bg-[#FFB800] px-8 py-3.5 font-display text-xs font-black uppercase tracking-wider text-black shadow-xl shadow-amber-500/20 disabled:opacity-50 cursor-pointer text-center"
                 >
                   {submitting ? "Sending request…" : "Send Booking Request"}
                   <ArrowRight aria-hidden="true" className="size-4" />
@@ -2394,7 +2424,7 @@ function Index() {
           </div>
 
           {/* Pricing Estimate Card Sidebar */}
-          <aside className="h-fit rounded-2xl border border-white/10 bg-[#0E1538] p-6 sm:p-7 lg:sticky lg:top-24 shadow-2xl">
+          <aside className="w-full max-w-full overflow-hidden h-fit rounded-2xl border border-white/10 bg-[#0E1538] p-5 sm:p-7 lg:sticky lg:top-24 shadow-2xl">
             <span className="flex size-11 items-center justify-center rounded-xl bg-[#FFB800]/15 text-[#FFB800]">
               <Clock3 className="size-5" />
             </span>
@@ -2758,7 +2788,7 @@ function Index() {
 
       {/* Booking Confirmation Celebration Dialog / Popup */}
       <Dialog open={showBookingPopup} onOpenChange={setShowBookingPopup}>
-        <DialogContent className="border border-white/20 bg-[#070B24]/95 text-white sm:max-w-md shadow-2xl backdrop-blur-2xl">
+        <DialogContent className="border border-white/20 bg-[#070B24]/95 text-white w-[calc(100vw-2rem)] max-w-md max-h-[92vh] overflow-y-auto p-5 sm:p-6 shadow-2xl backdrop-blur-2xl">
           <DialogHeader className="text-center sm:text-center space-y-3">
             <div className="mx-auto flex size-16 items-center justify-center rounded-3xl bg-emerald-500/20 border border-emerald-500/50 text-emerald-400 shadow-xl shadow-emerald-500/20 animate-pulse">
               <Check className="size-8 stroke-[3]" />
@@ -2863,7 +2893,7 @@ function Index() {
 
       {/* Write a Review / Comment Dialog */}
       <Dialog open={reviewModalOpen} onOpenChange={setReviewModalOpen}>
-        <DialogContent className="border border-white/20 bg-[#070B24]/95 text-white sm:max-w-lg shadow-2xl backdrop-blur-2xl max-h-[92vh] overflow-y-auto">
+        <DialogContent className="border border-white/20 bg-[#070B24]/95 text-white w-[calc(100vw-2rem)] max-w-lg shadow-2xl backdrop-blur-2xl max-h-[92vh] overflow-y-auto p-5 sm:p-6">
           <DialogHeader className="space-y-2">
             <div className="flex items-center gap-3">
               <div className="flex size-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#FFB800] to-[#23C8F3] text-black shadow-lg shadow-amber-500/20">
