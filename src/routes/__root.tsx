@@ -82,10 +82,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { title: "Friendz Arena | PS5 Gaming Lounge" },
-      { name: "description", content: "Book a PS5 gaming session at Friendz Arena in Jangareddygudem." },
+      {
+        name: "description",
+        content: "Book a PS5 gaming session at Friendz Arena in Jangareddygudem.",
+      },
       { name: "author", content: "Lovable" },
       { property: "og:title", content: "Friendz Arena | PS5 Gaming Lounge" },
-      { property: "og:description", content: "Book a PS5 gaming session at Friendz Arena in Jangareddygudem." },
+      {
+        property: "og:description",
+        content: "Book a PS5 gaming session at Friendz Arena in Jangareddygudem.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:site", content: "@Lovable" },

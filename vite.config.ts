@@ -15,4 +15,15 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
+  vite: {
+    server: {
+      allowedHosts: [
+        "trickier-bewilderingly-edda.ngrok-free.dev",
+        ".ngrok-free.dev",
+        ".ngrok.io",
+        ".ngrok.app",
+        "localhost",
+      ],
+    },
+  },
 });

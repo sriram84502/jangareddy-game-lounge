@@ -1,7 +1,7 @@
 # Jangareddy Game Lounge
 
 I like to build an website for an video game shop
-where they have 5 ps5s and all kind of popular games in it 
+where they have 5 ps5s and all kind of popular games in it
 so they are giving them as services in there shops for hourly bases
 it is located in jangareddygudem
 

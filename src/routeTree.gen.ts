@@ -10,33 +10,84 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminRouteImport } from './routes/admin'
+import { Route as GamesRouteImport } from './routes/games'
+import { Route as PassCheckRouteImport } from './routes/pass-check'
+import { Route as StationRouteImport } from './routes/station'
+import { Route as TvRouteImport } from './routes/tv'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GamesRoute = GamesRouteImport.update({
+  id: '/games',
+  path: '/games',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PassCheckRoute = PassCheckRouteImport.update({
+  id: '/pass-check',
+  path: '/pass-check',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StationRoute = StationRouteImport.update({
+  id: '/station',
+  path: '/station',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TvRoute = TvRouteImport.update({
+  id: '/tv',
+  path: '/tv',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/games': typeof GamesRoute
+  '/pass-check': typeof PassCheckRoute
+  '/station': typeof StationRoute
+  '/tv': typeof TvRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/games': typeof GamesRoute
+  '/pass-check': typeof PassCheckRoute
+  '/station': typeof StationRoute
+  '/tv': typeof TvRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRoute
+  '/games': typeof GamesRoute
+  '/pass-check': typeof PassCheckRoute
+  '/station': typeof StationRoute
+  '/tv': typeof TvRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/admin' | '/games' | '/pass-check' | '/station' | '/tv'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/admin' | '/games' | '/pass-check' | '/station' | '/tv'
+  id:
+    '__root__' | '/' | '/admin' | '/games' | '/pass-check' | '/station' | '/tv'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRoute
+  GamesRoute: typeof GamesRoute
+  PassCheckRoute: typeof PassCheckRoute
+  StationRoute: typeof StationRoute
+  TvRoute: typeof TvRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +99,51 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/games': {
+      id: '/games'
+      path: '/games'
+      fullPath: '/games'
+      preLoaderRoute: typeof GamesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pass-check': {
+      id: '/pass-check'
+      path: '/pass-check'
+      fullPath: '/pass-check'
+      preLoaderRoute: typeof PassCheckRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/station': {
+      id: '/station'
+      path: '/station'
+      fullPath: '/station'
+      preLoaderRoute: typeof StationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/tv': {
+      id: '/tv'
+      path: '/tv'
+      fullPath: '/tv'
+      preLoaderRoute: typeof TvRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRoute,
+  GamesRoute: GamesRoute,
+  PassCheckRoute: PassCheckRoute,
+  StationRoute: StationRoute,
+  TvRoute: TvRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
