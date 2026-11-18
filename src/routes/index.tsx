@@ -68,6 +68,7 @@ import { GAMES_LIST, GENRE_FILTERS, type GameItem } from "@/data/games";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
+      { name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" },
       { title: "Friendz Arena | Your Portal to Epic PS5 Gaming" },
       {
         name: "description",
@@ -738,16 +739,16 @@ function Index() {
   }
 
   return (
-    <main className="min-h-screen bg-[#070B1E] text-foreground antialiased selection:bg-[#FFB800] selection:text-black">
+    <main className="min-h-screen w-full max-w-full overflow-x-hidden bg-[#070B1E] text-foreground antialiased selection:bg-[#FFB800] selection:text-black">
       {/* Top Header Navigation */}
-      <header className="sticky top-0 z-40 border-b border-white/10 bg-[#050819]/90 backdrop-blur-xl">
-        <div className="mx-auto flex min-h-20 max-w-7xl items-center justify-between gap-5 px-5 sm:px-8">
+      <header className="sticky top-0 z-40 w-full max-w-full border-b border-white/10 bg-[#050819]/90 backdrop-blur-xl">
+        <div className="mx-auto flex min-h-20 max-w-7xl items-center justify-between gap-4 px-4 sm:px-8">
           <a
             href="#top"
-            className="flex min-w-0 items-center gap-3.5 group"
+            className="flex min-w-0 items-center gap-3 group"
             aria-label="Friendz Arena Home"
           >
-            <div className="relative size-12 shrink-0 overflow-hidden rounded-full border-2 border-cyan-400/80 bg-[#081348] p-1 shadow-lg shadow-cyan-500/25 transition-transform group-hover:scale-105">
+            <div className="relative size-11 sm:size-12 shrink-0 overflow-hidden rounded-full border-2 border-cyan-400/80 bg-[#081348] p-1 shadow-lg shadow-cyan-500/25 transition-transform group-hover:scale-105">
               <img
                 src="/logo.png"
                 alt="Friendz Arena Logo"
@@ -755,10 +756,10 @@ function Index() {
               />
             </div>
             <span className="min-w-0">
-              <span className="block truncate font-display text-base font-extrabold uppercase tracking-tight text-white sm:text-lg group-hover:text-cyan-300 transition-colors">
+              <span className="block truncate font-display text-sm sm:text-base font-extrabold uppercase tracking-tight text-white group-hover:text-cyan-300 transition-colors">
                 Friendz Arena
               </span>
-              <span className="block text-[11px] font-semibold tracking-wider text-[#23C8F3] uppercase">
+              <span className="block text-[10px] sm:text-[11px] font-semibold tracking-wider text-[#23C8F3] uppercase truncate">
                 PS5 Gaming Lounge
               </span>
             </span>
@@ -788,7 +789,7 @@ function Index() {
             </a>
           </nav>
 
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             <a
               href="https://wa.me/918498833389?text=Hi%20Friendz%20Arena%2C%20I%20would%20like%20to%20inquire%20about%20PS5%20slots%20and%20games!"
               target="_blank"
@@ -799,7 +800,7 @@ function Index() {
             </a>
             <a
               href="#book"
-              className="btn-chamfer inline-flex items-center gap-1.5 bg-[#FFB800] px-5 py-2.5 font-display text-xs font-black uppercase tracking-wider text-black shadow-lg shadow-amber-500/20"
+              className="btn-chamfer inline-flex items-center gap-1.5 bg-[#FFB800] px-4 sm:px-5 py-2 sm:py-2.5 font-display text-xs font-black uppercase tracking-wider text-black shadow-lg shadow-amber-500/20 cursor-pointer"
             >
               Book Now
             </a>
@@ -810,7 +811,7 @@ function Index() {
       {/* Hero Section: "YOUR PORTAL TO EPIC GAMING" */}
       <section
         id="top"
-        className="relative isolate overflow-hidden border-b border-white/10 pt-12 pb-20 sm:pt-16 sm:pb-28"
+        className="relative isolate w-full max-w-full overflow-hidden border-b border-white/10 pt-8 pb-16 sm:pt-16 sm:pb-28"
       >
         {/* Ambient Radial Cyber Lighting based on Logo Palette */}
         <div
@@ -822,13 +823,13 @@ function Index() {
           className="pointer-events-none absolute right-[-5%] top-[10%] -z-10 size-[38rem] rounded-full bg-[#8F58AF]/20 blur-[150px]"
         />
 
-        <div className="mx-auto max-w-7xl px-5 sm:px-8">
-          <div className="grid gap-12 lg:grid-cols-12 lg:items-center">
+        <div className="mx-auto max-w-7xl px-4 sm:px-8">
+          <div className="grid gap-10 lg:grid-cols-12 lg:items-center">
             {/* Left Column: Epic Gaming Heroes Squad Visual (Clean Arched Frame) */}
-            <div className="relative order-2 lg:order-1 lg:col-span-6">
+            <div className="relative order-2 lg:order-1 lg:col-span-6 min-w-0">
               <div className="relative mx-auto max-w-md sm:max-w-lg">
                 {/* Arched Gaming Frame with Cyber Glow */}
-                <div className="group relative aspect-[4/5] w-full overflow-hidden rounded-t-[80px] sm:rounded-t-[100px] rounded-b-3xl border border-cyan-400/30 bg-gradient-to-b from-[#081348] via-[#0B1B3D] to-[#050819] p-3 shadow-2xl shadow-cyan-950/80 ring-1 ring-cyan-500/20">
+                <div className="group relative aspect-[4/5] w-full overflow-hidden rounded-t-[80px] sm:rounded-t-[100px] rounded-b-3xl border border-cyan-400/30 bg-gradient-to-b from-[#081348] via-[#0B1B3D] to-[#050819] p-2.5 sm:p-3 shadow-2xl shadow-cyan-950/80 ring-1 ring-cyan-500/20">
                   <div className="relative size-full overflow-hidden rounded-t-[70px] sm:rounded-t-[90px] rounded-b-2xl bg-[#050819]">
                     {/* Epic Hero Characters Squad Visual */}
                     <img
@@ -844,48 +845,48 @@ function Index() {
                     />
 
                     {/* Top Floating Logo Crest Badge */}
-                    <div className="absolute top-4 left-4 flex items-center gap-2 rounded-full border border-cyan-400/40 bg-[#050819]/90 py-1 pl-1.5 pr-3.5 shadow-lg backdrop-blur-md">
-                      <div className="size-7 shrink-0 overflow-hidden rounded-full border border-cyan-400/60 bg-[#081348] p-0.5">
+                    <div className="absolute top-3 left-3 sm:top-4 sm:left-4 flex items-center gap-1.5 sm:gap-2 rounded-full border border-cyan-400/40 bg-[#050819]/90 py-1 pl-1.5 pr-2.5 sm:pr-3.5 shadow-lg backdrop-blur-md max-w-[50%]">
+                      <div className="size-6 sm:size-7 shrink-0 overflow-hidden rounded-full border border-cyan-400/60 bg-[#081348] p-0.5">
                         <img
                           src="/logo.png"
                           alt="Friendz Arena Logo Crest"
                           className="size-full rounded-full object-contain"
                         />
                       </div>
-                      <span className="font-display text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-cyan-300">
-                        Friendz Arena · Est. 2026
+                      <span className="font-display text-[9px] sm:text-[11px] font-black uppercase tracking-wider text-cyan-300 truncate">
+                        Friendz Arena
                       </span>
                     </div>
 
                     {/* Top Right Live Ready Badge */}
-                    <div className="absolute top-4 right-4 flex items-center gap-1.5 rounded-full border border-emerald-400/40 bg-[#050819]/90 px-3 py-1 backdrop-blur-md shadow-lg">
+                    <div className="absolute top-3 right-3 sm:top-4 sm:right-4 flex items-center gap-1.5 rounded-full border border-emerald-400/40 bg-[#050819]/90 px-2.5 sm:px-3 py-1 backdrop-blur-md shadow-lg">
                       <span className="relative flex size-2">
                         <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-75" />
                         <span className="relative inline-flex size-2 rounded-full bg-emerald-400" />
                       </span>
-                      <span className="font-display text-[10px] font-bold uppercase tracking-wider text-emerald-400">
+                      <span className="font-display text-[9px] sm:text-[10px] font-bold uppercase tracking-wider text-emerald-400 whitespace-nowrap">
                         5 Rigs Online
                       </span>
                     </div>
 
                     {/* Bottom Sleek Frosted HUD Card */}
-                    <div className="absolute inset-x-3 bottom-3 rounded-2xl border border-white/10 bg-slate-950/85 p-3.5 sm:p-4 backdrop-blur-xl shadow-2xl">
+                    <div className="absolute inset-x-2.5 bottom-2.5 sm:inset-x-3 sm:bottom-3 rounded-2xl border border-white/10 bg-slate-950/85 p-3 sm:p-4 backdrop-blur-xl shadow-2xl">
                       <div className="flex items-center justify-between gap-2">
                         <div>
-                          <p className="font-display text-[10px] font-bold uppercase tracking-widest text-[#23C8F3] flex items-center gap-1.5">
+                          <p className="font-display text-[9px] sm:text-[10px] font-bold uppercase tracking-widest text-[#23C8F3] flex items-center gap-1.5">
                             <Sparkles className="size-3 text-cyan-400" /> PlayStation 5 Squad Hub
                           </p>
-                          <h3 className="mt-0.5 font-display text-sm sm:text-base font-black uppercase tracking-tight text-white">
+                          <h3 className="mt-0.5 font-display text-xs sm:text-base font-black uppercase tracking-tight text-white">
                             Assemble Your Squad
                           </h3>
                         </div>
                         <div className="shrink-0 text-right">
-                          <span className="rounded-md border border-amber-400/30 bg-amber-400/10 px-2.5 py-1 font-display text-[11px] font-black uppercase tracking-wide text-amber-400">
+                          <span className="rounded-md border border-amber-400/30 bg-amber-400/10 px-2 sm:px-2.5 py-0.5 sm:py-1 font-display text-[10px] sm:text-[11px] font-black uppercase tracking-wide text-amber-400">
                             From ₹100/Hr
                           </span>
                         </div>
                       </div>
-                      <div className="mt-2.5 flex items-center justify-between border-t border-white/10 pt-2 text-[10px] font-medium text-slate-300">
+                      <div className="mt-2.5 flex flex-wrap items-center justify-between gap-1.5 border-t border-white/10 pt-2 text-[9px] sm:text-[10px] font-medium text-slate-300">
                         <span className="inline-flex items-center gap-1">
                           <Gamepad2 className="size-3 text-cyan-400" /> 5 Dedicated Rigs
                         </span>
@@ -903,37 +904,37 @@ function Index() {
             </div>
 
             {/* Right Column: Hero Headline, Subtitle, Actions */}
-            <div className="order-1 lg:order-2 lg:col-span-6 lg:pl-6">
+            <div className="order-1 lg:order-2 lg:col-span-6 lg:pl-6 min-w-0">
               {/* Category Pill */}
-              <div className="inline-flex items-center gap-2.5 rounded-full border border-cyan-400/30 bg-cyan-950/50 px-4 py-1.5 font-display text-xs font-semibold text-cyan-300 backdrop-blur-md shadow-sm">
-                <span className="relative flex size-2">
+              <div className="inline-flex items-center gap-2 rounded-full border border-cyan-400/30 bg-cyan-950/50 px-3.5 sm:px-4 py-1.5 font-display text-xs font-semibold text-cyan-300 backdrop-blur-md shadow-sm max-w-full">
+                <span className="relative flex size-2 shrink-0">
                   <span className="absolute inline-flex size-full animate-ping rounded-full bg-cyan-400 opacity-75" />
                   <span className="relative inline-flex size-2 rounded-full bg-cyan-400" />
                 </span>
-                <span className="uppercase tracking-widest text-[11px] text-cyan-200">Next-Gen PS5 Gaming Lounge</span>
+                <span className="uppercase tracking-widest text-[10px] sm:text-[11px] text-cyan-200 truncate">PS5 Gaming Lounge</span>
                 <span className="text-white/20">|</span>
-                <span className="font-display font-black text-[#FFB800]">Jangareddygudem</span>
+                <span className="font-display font-black text-[#FFB800] truncate">Jangareddygudem</span>
               </div>
 
               {/* Big Two-Tone Headline aligned with logo colors */}
-              <h1 className="mt-5 font-display text-4xl font-black uppercase leading-[1.06] tracking-tight text-white sm:text-6xl xl:text-7xl">
+              <h1 className="mt-5 font-display text-3xl sm:text-6xl xl:text-7xl font-black uppercase leading-[1.06] tracking-tight text-white">
                 Your Portal To{" "}
                 <span className="bg-gradient-to-r from-[#23C8F3] via-[#A855F7] to-[#EC4899] bg-clip-text text-transparent">
                   Epic Gaming
                 </span>
               </h1>
 
-              <p className="mt-5 max-w-xl text-base leading-relaxed text-slate-300 sm:text-lg">
+              <p className="mt-4 sm:mt-5 max-w-xl text-sm sm:text-lg leading-relaxed text-slate-300">
                 Five PlayStation 5 stations loaded with 90+ titles, PlayStation Plus Deluxe, and 4K
                 120Hz HDR displays. Drop in solo or bring your squad for Jangareddygudem’s ultimate
                 next-gen gaming experience.
               </p>
 
               {/* Action Buttons */}
-              <div className="mt-8 flex flex-wrap items-center gap-3.5">
+              <div className="mt-6 sm:mt-8 flex flex-wrap items-center gap-3">
                 <a
                   href="#book"
-                  className="btn-chamfer inline-flex items-center gap-2 bg-[#FFB800] px-7 py-3.5 font-display text-xs font-black uppercase tracking-wider text-black shadow-xl shadow-amber-500/20 transition-transform hover:-translate-y-0.5"
+                  className="btn-chamfer inline-flex items-center gap-2 bg-[#FFB800] px-6 sm:px-7 py-3 sm:py-3.5 font-display text-xs font-black uppercase tracking-wider text-black shadow-xl shadow-amber-500/20 transition-transform hover:-translate-y-0.5"
                 >
                   Book A Session <ArrowRight className="size-4" />
                 </a>
@@ -942,43 +943,43 @@ function Index() {
                   href="https://wa.me/918498833389?text=Hi%20Friendz%20Arena%2C%20I%20want%20to%20book%20a%20PS5%20slot!"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="btn-chamfer inline-flex items-center gap-2 bg-[#25D366] hover:bg-[#20ba59] px-6 py-3.5 font-display text-xs font-black uppercase tracking-wider text-black shadow-xl shadow-emerald-500/20 transition-transform hover:-translate-y-0.5 cursor-pointer"
+                  className="btn-chamfer inline-flex items-center gap-2 bg-[#25D366] hover:bg-[#20ba59] px-5 sm:px-6 py-3 sm:py-3.5 font-display text-xs font-black uppercase tracking-wider text-black shadow-xl shadow-emerald-500/20 transition-transform hover:-translate-y-0.5 cursor-pointer"
                 >
-                  <MessageCircle className="size-4 fill-current" /> WhatsApp Us
+                  <MessageCircle className="size-4 fill-current" /> WhatsApp
                 </a>
 
                 <Link
                   to="/games"
-                  className="inline-flex items-center gap-2 rounded-full border border-cyan-400/40 bg-cyan-950/30 px-6 py-3 font-display text-xs font-bold uppercase tracking-wider text-cyan-300 transition-all hover:border-cyan-300 hover:bg-cyan-900/40 hover:-translate-y-0.5 shadow-lg shadow-cyan-950/40 backdrop-blur-sm"
+                  className="inline-flex items-center gap-2 rounded-full border border-cyan-400/40 bg-cyan-950/30 px-5 sm:px-6 py-2.5 sm:py-3 font-display text-xs font-bold uppercase tracking-wider text-cyan-300 transition-all hover:border-cyan-300 hover:bg-cyan-900/40 shadow-lg shadow-cyan-950/40 backdrop-blur-sm"
                 >
-                  <Sparkles className="size-3.5 text-cyan-300" /> Explore 90+ Games
+                  <Sparkles className="size-3.5 text-cyan-300" /> 90+ Games
                 </Link>
 
                 <Link
                   to="/pass-check"
-                  className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-5 py-3 font-display text-xs font-bold uppercase tracking-wider text-slate-300 transition-colors hover:border-white/30 hover:bg-white/10 hover:text-white"
+                  className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/5 px-4 sm:px-5 py-2.5 sm:py-3 font-display text-xs font-bold uppercase tracking-wider text-slate-300 transition-colors hover:border-white/30 hover:bg-white/10 hover:text-white"
                 >
-                  Check Pass Hours
+                  Check Pass
                 </Link>
               </div>
 
               {/* Modern Trust / Spec Cards Grid */}
-              <div className="mt-10 grid grid-cols-3 gap-3 border-t border-white/10 pt-6">
-                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3.5 backdrop-blur-md transition-colors hover:border-cyan-400/30">
+              <div className="mt-8 sm:mt-10 grid grid-cols-1 sm:grid-cols-3 gap-2.5 sm:gap-3 border-t border-white/10 pt-6">
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 sm:p-3.5 backdrop-blur-md transition-colors hover:border-cyan-400/30">
                   <div className="flex items-center gap-2 text-cyan-400">
                     <Gamepad2 className="size-4" />
                     <span className="font-display text-[11px] font-bold uppercase tracking-wider text-white">5 PS5 Rigs</span>
                   </div>
                   <p className="mt-1 text-xs text-slate-400">4K 120Hz Displays</p>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3.5 backdrop-blur-md transition-colors hover:border-fuchsia-400/30">
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 sm:p-3.5 backdrop-blur-md transition-colors hover:border-fuchsia-400/30">
                   <div className="flex items-center gap-2 text-fuchsia-400">
                     <Sparkles className="size-4" />
                     <span className="font-display text-[11px] font-bold uppercase tracking-wider text-white">90+ Titles</span>
                   </div>
                   <p className="mt-1 text-xs text-slate-400">Deluxe Library & GTA VI</p>
                 </div>
-                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3.5 backdrop-blur-md transition-colors hover:border-amber-400/30">
+                <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3 sm:p-3.5 backdrop-blur-md transition-colors hover:border-amber-400/30">
                   <div className="flex items-center gap-2 text-amber-400">
                     <Clock3 className="size-4" />
                     <span className="font-display text-[11px] font-bold uppercase tracking-wider text-white">From ₹100/hr</span>
@@ -1387,7 +1388,7 @@ function Index() {
             </p>
           </div>
 
-          <div className="overflow-x-auto rounded-2xl border border-white/10 bg-[#0E1538]/60 backdrop-blur-md">
+          <div className="w-full max-w-full overflow-x-auto rounded-2xl border border-white/10 bg-[#0E1538]/60 backdrop-blur-md">
             <table className="w-full min-w-[38rem] border-collapse text-left">
               <caption className="sr-only">
                 Total session prices in rupees by number of people and hours
@@ -1800,7 +1801,7 @@ function Index() {
             {testimonialsList.map((review: any, idx: number) => (
               <div
                 key={review.id || `${review.name}-${idx}`}
-                className={`relative flex flex-col justify-between rounded-[36px] p-6 shadow-2xl transition-transform duration-300 hover:rotate-0 hover:scale-105 ${review.bgColor} ${review.cardAngle}`}
+                className={`relative flex flex-col justify-between rounded-[36px] p-6 shadow-2xl transition-transform duration-300 hover:rotate-0 hover:scale-105 ${review.bgColor} sm:${review.cardAngle}`}
               >
                 <div>
                   {/* Top user row */}
@@ -1914,7 +1915,7 @@ function Index() {
       {/* Booking Form Section */}
       <section id="book" className="scroll-mt-8 border-b border-white/10 bg-[#070B1E] py-16 sm:py-24">
         <div className="mx-auto grid max-w-7xl gap-10 px-5 sm:px-8 lg:grid-cols-[minmax(0,1fr)_20rem] lg:gap-14">
-          <div>
+          <div className="min-w-0">
             <p className="font-display text-xs font-bold uppercase tracking-widest text-[#FFB800]">
               YOUR NEXT SESSION
             </p>
@@ -2119,7 +2120,7 @@ function Index() {
                 </div>
 
                 {/* Horizontal Date Cards Carousel (Playo Style) */}
-                <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin">
+                <div className="flex w-full max-w-full items-center gap-2 overflow-x-auto pb-2 scrollbar-thin">
                   {dateOptions.map((opt) => {
                     const isSelected = visitDate === opt.iso;
                     return (

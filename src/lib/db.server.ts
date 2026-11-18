@@ -374,10 +374,16 @@ export async function getSqlDatabase(): Promise<SqlJsDatabase> {
     );
   }
 
-  // Seed Sample Bookings if empty
+  // Seed Sample Bookings if empty and not explicitly cleared by admin
+  try {
+    _db.run("CREATE TABLE IF NOT EXISTS app_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)");
+  } catch {}
+  const settingsCheck = _db.exec("SELECT value FROM app_settings WHERE key = 'seeded_bookings'");
+  const hasClearedFlag = settingsCheck[0]?.values[0]?.[0] === "cleared";
+
   const bookingsCheck = _db.exec("SELECT COUNT(*) as count FROM bookings");
   const bookingsCount = bookingsCheck[0]?.values[0]?.[0] as number;
-  if (!bookingsCount) {
+  if (!bookingsCount && !hasClearedFlag) {
     const today = new Date().toISOString().slice(0, 10);
     _db.run(
       `INSERT INTO bookings 
@@ -537,6 +543,19 @@ export async function sqlGetAllBookings(): Promise<SqlBookingRow[]> {
 }
 
 export const sqlGetBookings = sqlGetAllBookings;
+
+export async function sqlDeleteAllBookings(): Promise<number> {
+  const db = await getSqlDatabase();
+  const countRes = db.exec("SELECT COUNT(*) FROM bookings");
+  const count = (countRes[0]?.values[0]?.[0] as number) || 0;
+  db.run("DELETE FROM bookings");
+  try {
+    db.run("CREATE TABLE IF NOT EXISTS app_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)");
+    db.run("INSERT OR REPLACE INTO app_settings (key, value) VALUES ('seeded_bookings', 'cleared')");
+  } catch {}
+  persistDatabase(db);
+  return count;
+}
 
 export async function sqlInsertBooking(b: Omit<SqlBookingRow, "id" | "created_at">): Promise<SqlBookingRow> {
   const db = await getSqlDatabase();

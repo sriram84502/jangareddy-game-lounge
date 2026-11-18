@@ -424,6 +424,16 @@ export const adminAutoAssignBookingFn = createServerFn({ method: "POST" })
     return { success: true, assignedRig: autoRes.assignedRig, message: autoRes.message };
   });
 
+// Clear All Bookings (Admin only)
+export const adminClearAllBookingsFn = createServerFn({ method: "POST" })
+  .validator((input: { token: string }) => z.object({ token: z.string() }).parse(input))
+  .handler(async ({ data }) => {
+    if (!data.token) throw new Error("Unauthorized");
+    const { sqlDeleteAllBookings } = await import("@/lib/db.server");
+    const deletedCount = await sqlDeleteAllBookings();
+    return { success: true, deletedCount };
+  });
+
 // 6c. Check Availability of All 5 Rigs for a Specific Slot (Used by Desk Walk-in Form)
 export const checkRigSlotAvailabilityFn = createServerFn({ method: "GET" })
   .validator(

@@ -85,6 +85,7 @@ import {
   adminUpdateTestimonialStatusFn,
   adminToggleTestimonialFeaturedFn,
   adminDeleteTestimonialFn,
+  adminClearAllBookingsFn,
 } from "@/lib/booking.functions";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -154,6 +155,7 @@ function AdminPage() {
   const updateTestimonialStatusFn = useServerFn(adminUpdateTestimonialStatusFn);
   const toggleTestimonialFeaturedFn = useServerFn(adminToggleTestimonialFeaturedFn);
   const deleteTestimonialFn = useServerFn(adminDeleteTestimonialFn);
+  const clearAllBookingsFn = useServerFn(adminClearAllBookingsFn);
 
   // Auth State
   const [authToken, setAuthToken] = useState<string | null>(null);
@@ -261,6 +263,11 @@ function AdminPage() {
   const [deductResult, setDeductResult] = useState("");
   const [offlineFormSuccess, setOfflineFormSuccess] = useState<any | null>(null);
   const [offlineFormError, setOfflineFormError] = useState("");
+
+  // Clear Bookings Modal State
+  const [showClearModal, setShowClearModal] = useState(false);
+  const [clearConfirmText, setClearConfirmText] = useState("");
+  const [clearingBookings, setClearingBookings] = useState(false);
 
   // Quick Walk-in Rig Modal State
   const [quickWalkInRig, setQuickWalkInRig] = useState<string | null>(null);
@@ -700,7 +707,85 @@ function AdminPage() {
     await updateStationOrderStatusFn({
       data: { token: authToken, id, status },
     });
+
+    // If order was marked delivered, check if rig session has expired
+    if (status === "delivered") {
+      const order = stationOrders.find((o) => o.id === id);
+      if (order && order.station_rig) {
+        const rigClean = order.station_rig.split("·")[0].trim().toLowerCase();
+        const activeB = bookings.find((b) => {
+          if (!b.station_rig || !b.station_rig.toLowerCase().includes(rigClean)) return false;
+          if (b.status !== "confirmed" || b.visit_date !== todayStr) return false;
+          const [bh, bm] = b.visit_time.split(":").map(Number);
+          const bStart = (bh || 0) * 60 + (bm || 0);
+          const bEnd = bStart + (Number(b.duration_hours) || 1) * 60;
+          return currentMinutes >= bEnd;
+        });
+
+        if (activeB) {
+          // Time is expired and order is now delivered: conclude session and open bill!
+          try {
+            await updateStatusFn({
+              data: {
+                token: authToken,
+                bookingId: activeB.id,
+                status: "completed",
+              },
+            });
+            setReceiptBooking(activeB);
+            loadBookings();
+            loadDaySchedule(scheduleDate);
+          } catch {}
+        }
+      }
+    }
+
     loadStationOrders();
+  }
+
+  // One-click Conclude to Bill & Free Station
+  async function handleConcludeToBill(booking: any) {
+    if (!authToken || !booking) return;
+    try {
+      await updateStatusFn({
+        data: {
+          token: authToken,
+          bookingId: booking.id,
+          status: "completed",
+        },
+      });
+      setReceiptBooking(booking);
+      loadBookings();
+      loadDaySchedule(scheduleDate);
+      loadStationOrders();
+    } catch (err: any) {
+      alert(err?.message || "Failed to conclude session.");
+    }
+  }
+
+  // Clear All Bookings handler with safety check
+  async function handleClearAllBookings() {
+    if (!authToken) return;
+    if (clearConfirmText.trim().toUpperCase() !== "DELETE") {
+      alert("Please type DELETE to confirm.");
+      return;
+    }
+    setClearingBookings(true);
+    try {
+      const res = await clearAllBookingsFn({ data: { token: authToken } });
+      if (res?.success) {
+        setShowClearModal(false);
+        setClearConfirmText("");
+        loadBookings();
+        loadDaySchedule(scheduleDate);
+        loadAnalytics();
+        alert(`✓ Successfully cleared all ${res.deletedCount || 0} bookings from the database.`);
+      }
+    } catch (err: any) {
+      alert(err?.message || "Failed to clear bookings.");
+    } finally {
+      setClearingBookings(false);
+    }
   }
 
   // Save new snack
@@ -1520,6 +1605,22 @@ function AdminPage() {
           return false;
         }
 
+        // Check if session time has expired
+        const isTimeExpired = currentMinutes >= bEnd;
+
+        // Check if orders for this rig exist and whether all orders are delivered
+        const rigClean = stationName.split("·")[0]?.trim().toLowerCase();
+        const rigOrders = stationOrders.filter((so) => so.station_rig && so.station_rig.toLowerCase().includes(rigClean));
+        const hasOrders = rigOrders.length > 0;
+        const hasPendingOrders = rigOrders.some((so) => so.status === "pending");
+        const areOrdersDelivered = hasOrders ? !hasPendingOrders : true;
+
+        // USER RULE: In LIVE STATION TIMERS, if time expires and orders are delivered,
+        // it is removed from that page and added to the bill!
+        if (isTimeExpired && areOrdersDelivered) {
+          return false;
+        }
+
         // If session has expired well past its end time (+25 min grace), it is no longer active
         if (currentMinutes > bEnd + 25) {
           return false;
@@ -1580,7 +1681,30 @@ function AdminPage() {
         statusColor,
       };
     });
-  }, [bookings, currentMinutes, todayStr]);
+  }, [bookings, currentMinutes, todayStr, stationOrders]);
+
+  // Sessions whose time has expired and orders are delivered (or completed today)
+  const concludedBillsToday = useMemo(() => {
+    return bookings.filter((b) => {
+      if (b.visit_date !== todayStr) return false;
+      if (b.status === "completed") return true;
+      if (b.status !== "confirmed") return false;
+
+      // Check if session time has expired
+      const [bh, bm] = b.visit_time.split(":").map(Number);
+      const bStart = (bh || 0) * 60 + (bm || 0);
+      const bEnd = bStart + (Number(b.duration_hours) || 1) * 60;
+      const isTimeExpired = currentMinutes >= bEnd;
+
+      const rigClean = (b.station_rig || "").split("·")[0]?.trim().toLowerCase();
+      const rigOrders = stationOrders.filter((so) => so.station_rig && so.station_rig.toLowerCase().includes(rigClean));
+      const hasOrders = rigOrders.length > 0;
+      const hasPendingOrders = rigOrders.some((so) => so.status === "pending");
+      const areOrdersDelivered = hasOrders ? !hasPendingOrders : true;
+
+      return isTimeExpired && areOrdersDelivered;
+    });
+  }, [bookings, currentMinutes, todayStr, stationOrders]);
 
   // Filtered Bookings
   const filteredBookings = useMemo(() => {
@@ -2094,6 +2218,16 @@ function AdminPage() {
                         </button>
                       </div>
 
+                      {st.minutesLeft <= 0 && (
+                        <button
+                          type="button"
+                          onClick={() => handleConcludeToBill(st.booking)}
+                          className="btn-chamfer w-full bg-gradient-to-r from-[#FFB800] to-amber-400 py-2.5 text-center font-display text-xs font-black uppercase text-black hover:brightness-110 shadow-lg cursor-pointer"
+                        >
+                          🧾 Add to Bill & Free Station
+                        </button>
+                      )}
+
                       <div className="flex items-center gap-2 pt-1">
                         <button
                           type="button"
@@ -2153,6 +2287,96 @@ function AdminPage() {
                 </div>
               ))}
             </div>
+
+            {/* Ready Bills & Concluded Sessions (Moved to bill when expired & delivered) */}
+            {concludedBillsToday.length > 0 && (
+              <div className="rounded-3xl border border-emerald-500/30 bg-emerald-950/20 p-6 backdrop-blur-xl space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div>
+                    <h3 className="font-display text-base font-black uppercase text-white flex items-center gap-2">
+                      <Receipt className="size-4 text-emerald-400" /> Ready Bills & Concluded Sessions ({concludedBillsToday.length})
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      Sessions whose timer expired and orders are delivered. Rigs have been freed for new walk-ins and added to the bill.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {concludedBillsToday.map((cb) => {
+                    const rigClean = (cb.station_rig || "").split("·")[0]?.trim().toLowerCase();
+                    const deliveredSnacks = stationOrders.filter(
+                      (so) => so.station_rig && so.station_rig.toLowerCase().includes(rigClean) && (so.status === "delivered" || so.status === "paid")
+                    );
+                    const snacksCost = deliveredSnacks.reduce((acc, so) => acc + (Number(so.total_amount) || 0), 0);
+                    let sessionPrice = 0;
+                    try {
+                      sessionPrice = calculateSessionPrice(
+                        Math.min(5, Math.max(1, Number(cb.party_size) || 1)),
+                        (Math.min(3, Math.max(1, Number(cb.duration_hours) || 1)) as SessionDuration)
+                      );
+                    } catch {
+                      sessionPrice = Number(cb.estimated_total) || 100;
+                    }
+                    const totalBill = sessionPrice + snacksCost;
+
+                    return (
+                      <div key={cb.id} className="rounded-2xl border border-white/10 bg-[#081348]/90 p-4 space-y-3 shadow-xl">
+                        <div className="flex items-center justify-between">
+                          <span className="font-display text-xs font-black uppercase text-[#FFB800]">
+                            {cb.station_rig ? cb.station_rig.split("·")[0]?.trim() : "PS5 Rig"}
+                          </span>
+                          <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase border ${
+                            cb.status === "completed"
+                              ? "bg-blue-500/20 text-blue-300 border-blue-500/40"
+                              : "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                          }`}>
+                            {cb.status === "completed" ? "✓ Paid & Closed" : "🧾 Added to Bill"}
+                          </span>
+                        </div>
+
+                        <div className="text-xs space-y-1">
+                          <p className="font-bold text-white text-sm">{cb.customer_name}</p>
+                          <p className="text-cyan-300 font-mono text-[11px]">{cb.phone}</p>
+                          <div className="flex justify-between text-muted-foreground text-[11px] pt-1 border-t border-white/10">
+                            <span>Session: {cb.visit_time} ({cb.duration_hours}h · {cb.party_size}P)</span>
+                            <span className="font-bold text-white">₹{sessionPrice}</span>
+                          </div>
+                          {deliveredSnacks.length > 0 && (
+                            <div className="flex justify-between text-amber-300 text-[11px]">
+                              <span>Delivered Snacks ({deliveredSnacks.length})</span>
+                              <span className="font-bold">₹{snacksCost}</span>
+                            </div>
+                          )}
+                          <div className="flex justify-between items-center text-xs font-black pt-1.5 border-t border-white/10">
+                            <span className="text-white uppercase tracking-wider">Total Bill:</span>
+                            <span className="text-emerald-400 font-display text-base">₹{totalBill}</span>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 pt-1">
+                          <button
+                            type="button"
+                            onClick={() => setReceiptBooking(cb)}
+                            className="btn-chamfer bg-gradient-to-r from-[#FFB800] to-amber-400 py-2 text-center font-display text-xs font-black uppercase text-black shadow-md cursor-pointer"
+                          >
+                            🧾 View Bill
+                          </button>
+                          <a
+                            href={getWhatsAppInvoiceUrl(cb)}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="rounded-xl border border-emerald-500/40 bg-emerald-500/10 py-2 text-center font-display text-xs font-bold text-emerald-400 hover:bg-emerald-500 hover:text-black flex items-center justify-center gap-1"
+                          >
+                            <MessageCircle className="size-3.5" /> WhatsApp
+                          </a>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
 
             {/* Live Station Calls & Orders */}
             <div className="rounded-3xl border border-white/10 bg-[#081348]/70 p-6 backdrop-blur-xl space-y-4">
@@ -3819,6 +4043,17 @@ function AdminPage() {
                   className="flex items-center gap-1.5 rounded-xl border border-white/15 bg-white/5 px-3 py-2 text-xs font-bold text-white hover:bg-white/10"
                 >
                   <Download className="size-3.5" /> CSV
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setClearConfirmText("");
+                    setShowClearModal(true);
+                  }}
+                  className="flex items-center gap-1.5 rounded-xl border border-red-500/40 bg-red-950/40 px-3 py-2 text-xs font-bold text-red-300 hover:bg-red-900/60 transition-colors cursor-pointer"
+                >
+                  <Trash2 className="size-3.5" /> Clear All Bookings
                 </button>
               </div>
             </div>
@@ -6919,6 +7154,69 @@ function AdminPage() {
                   </div>
                 );
               })}
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ========================================================================= */}
+      {/* MODAL 8: PERMANENTLY CLEAR ALL BOOKINGS CONFIRMATION                       */}
+      {/* ========================================================================= */}
+      {showClearModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4"
+          onClick={() => setShowClearModal(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-3xl border border-red-500/50 bg-[#0E1538] p-6 shadow-2xl space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex size-12 shrink-0 items-center justify-center rounded-2xl bg-red-500/20 border border-red-500/40 text-red-400 shadow-lg shadow-red-500/20">
+                <Trash2 className="size-6 stroke-[2.5]" />
+              </div>
+              <div>
+                <h3 className="font-display text-base font-black uppercase text-white">
+                  Permanently Delete All Bookings
+                </h3>
+                <p className="text-xs text-red-400 font-bold uppercase tracking-wider">⚠️ Irreversible Action</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              This action will permanently delete all {bookings.length} booking records, past customer reservation history, and clear the queue.
+            </p>
+
+            <div className="space-y-1.5 rounded-2xl border border-white/10 bg-black/40 p-3.5">
+              <Label className="text-xs font-bold uppercase text-white">
+                Type <strong className="text-red-400">DELETE</strong> to confirm:
+              </Label>
+              <Input
+                value={clearConfirmText}
+                onChange={(e) => setClearConfirmText(e.target.value)}
+                placeholder="Type DELETE"
+                className="rounded-xl border-white/10 bg-[#081348] text-white"
+                autoFocus
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-white/10">
+              <button
+                type="button"
+                onClick={() => setShowClearModal(false)}
+                className="rounded-xl border border-white/20 bg-white/5 px-4 py-2 text-xs font-bold text-white hover:bg-white/10 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={clearConfirmText.trim().toUpperCase() !== "DELETE" || clearingBookings}
+                onClick={handleClearAllBookings}
+                className="rounded-xl bg-red-600 px-5 py-2 text-xs font-bold text-white hover:bg-red-500 disabled:opacity-40 cursor-pointer"
+              >
+                {clearingBookings ? "Clearing..." : "Delete All Bookings"}
+              </button>
             </div>
           </div>
         </div>
