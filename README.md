@@ -1,4 +1,4 @@
-# Jangareddy Game Lounge
+# Friendz Arena (friendzarena)
 
 I like to build an website for an video game shop
 where they have 5 ps5s and all kind of popular games in it

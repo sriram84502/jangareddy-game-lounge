@@ -34,3 +34,4 @@ data/
 *.sqlite
 references/
 .vercel
+.env*.local
