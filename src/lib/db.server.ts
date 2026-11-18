@@ -248,6 +248,21 @@ export async function getSqlDatabase(): Promise<SqlJsDatabase> {
       status TEXT NOT NULL DEFAULT 'pending',
       created_at TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS testimonials (
+      id TEXT PRIMARY KEY,
+      customer_name TEXT NOT NULL,
+      role TEXT DEFAULT 'Gamer',
+      rating INTEGER NOT NULL DEFAULT 5,
+      comment TEXT NOT NULL,
+      favorite_game TEXT DEFAULT '',
+      station_rig TEXT DEFAULT '',
+      status TEXT NOT NULL DEFAULT 'approved',
+      is_featured INTEGER NOT NULL DEFAULT 0,
+      bg_color TEXT DEFAULT 'bg-gradient-to-b from-[#23C8F3] to-[#0284C7] text-black',
+      card_angle TEXT DEFAULT 'rotate-[-1.5deg]',
+      created_at TEXT NOT NULL
+    );
   `);
 
   // Migrate any missing columns in existing SQLite tables safely
@@ -413,6 +428,70 @@ export async function getSqlDatabase(): Promise<SqlJsDatabase> {
         new Date(Date.now() - 3600000 * 2).toISOString(),
       ]
     );
+  }
+
+  // Seed Default Testimonials if empty
+  const testimonialsCheck = _db.exec("SELECT COUNT(*) as count FROM testimonials");
+  const testimonialsCount = testimonialsCheck[0]?.values[0]?.[0] as number;
+  if (!testimonialsCount) {
+    const defaultTestimonials = [
+      {
+        id: "testimonial-1",
+        customer_name: "Ailani Wyatt",
+        role: "FIFA & Cricket Regular",
+        rating: 5,
+        comment: "This gaming lounge exceeded all my expectations! The graphics on the 4K screens are breathtaking, and gameplay is ultra smooth. Cricket 24 with 4 friends was non-stop fun!",
+        favorite_game: "Cricket 24",
+        station_rig: "Rig 01 · DualSense 1v1 Arena",
+        bg_color: "bg-gradient-to-b from-[#23C8F3] to-[#0284C7] text-black",
+        card_angle: "rotate-[-2deg]",
+        is_featured: 1,
+      },
+      {
+        id: "testimonial-2",
+        customer_name: "Keira Roy",
+        role: "Tourney Player",
+        rating: 5,
+        comment: "The local multiplayer mode is a lot of fun. Controllers are perfectly balanced and genuinely responsive. Can't wait for GTA 6 launch day on these PS5 stations!",
+        favorite_game: "Grand Theft Auto VI",
+        station_rig: "Rig 02 · Vice City Ready",
+        bg_color: "bg-gradient-to-b from-[#A855F7] to-[#7E22CE] text-white",
+        card_angle: "rotate-[1.5deg]",
+        is_featured: 1,
+      },
+      {
+        id: "testimonial-3",
+        customer_name: "Sam Lopez",
+        role: "Regular Visitor",
+        rating: 5,
+        comment: "Plus, the regular game updates with new titles make it even better. Highly recommended for anyone looking for an exciting and immersive gaming experience in Jangareddygudem!",
+        favorite_game: "EA SPORTS FC 24",
+        station_rig: "Rig 03 · Fighting Colosseum",
+        bg_color: "bg-gradient-to-b from-[#059669] to-[#047857] text-white",
+        card_angle: "rotate-[-1.5deg]",
+        is_featured: 0,
+      },
+      {
+        id: "testimonial-4",
+        customer_name: "Gianna McGee",
+        role: "Weekend Squad",
+        rating: 5,
+        comment: "Absolutely love this gaming spot! The gameplay on PS5 is incredibly smooth, and group pricing is super reasonable (₹150 for 2 players). The vibe kept us hooked for 3 hours straight!",
+        favorite_game: "TEKKEN 8",
+        station_rig: "Rig 05 · Co-op Squad Lounge",
+        bg_color: "bg-gradient-to-b from-[#84CC16] to-[#4D7C0F] text-black",
+        card_angle: "rotate-[2deg]",
+        is_featured: 0,
+      },
+    ];
+    for (const t of defaultTestimonials) {
+      _db.run(
+        `INSERT INTO testimonials 
+        (id, customer_name, role, rating, comment, favorite_game, station_rig, status, is_featured, bg_color, card_angle, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 'approved', ?, ?, ?, ?)`,
+        [t.id, t.customer_name, t.role, t.rating, t.comment, t.favorite_game, t.station_rig, t.is_featured, t.bg_color, t.card_angle, new Date().toISOString()]
+      );
+    }
   }
 
   saveDatabaseToFile(_db);
@@ -1558,4 +1637,150 @@ export async function sqlGetGamerPassByQuery(query: string): Promise<any | null>
     obj[col] = row[i];
   });
   return obj;
+}
+
+// ==========================================
+// TESTIMONIALS & REVIEWS ENGINE
+// ==========================================
+export interface SqlTestimonialRow {
+  id: string;
+  customer_name: string;
+  role: string;
+  rating: number;
+  comment: string;
+  favorite_game: string;
+  station_rig: string;
+  status: "approved" | "pending" | "hidden";
+  is_featured: number;
+  bg_color: string;
+  card_angle: string;
+  created_at: string;
+}
+
+export async function sqlGetPublicTestimonials(): Promise<SqlTestimonialRow[]> {
+  const db = await getSqlDatabase();
+  const res = db.exec("SELECT * FROM testimonials WHERE status = 'approved' ORDER BY is_featured DESC, created_at DESC");
+  if (!res[0]) return [];
+  const cols = res[0].columns;
+  return res[0].values.map((row) => {
+    const obj: any = {};
+    cols.forEach((col, i) => {
+      obj[col] = row[i];
+    });
+    return obj as SqlTestimonialRow;
+  });
+}
+
+export async function sqlGetAllTestimonialsAdmin(): Promise<SqlTestimonialRow[]> {
+  const db = await getSqlDatabase();
+  const res = db.exec("SELECT * FROM testimonials ORDER BY created_at DESC");
+  if (!res[0]) return [];
+  const cols = res[0].columns;
+  return res[0].values.map((row) => {
+    const obj: any = {};
+    cols.forEach((col, i) => {
+      obj[col] = row[i];
+    });
+    return obj as SqlTestimonialRow;
+  });
+}
+
+const TESTIMONIAL_COLORS = [
+  "bg-gradient-to-b from-[#23C8F3] to-[#0284C7] text-black",
+  "bg-gradient-to-b from-[#A855F7] to-[#7E22CE] text-white",
+  "bg-gradient-to-b from-[#059669] to-[#047857] text-white",
+  "bg-gradient-to-b from-[#84CC16] to-[#4D7C0F] text-black",
+  "bg-gradient-to-b from-[#F59E0B] to-[#D97706] text-black",
+  "bg-gradient-to-b from-[#F43F5E] to-[#BE123C] text-white",
+];
+
+const TESTIMONIAL_ANGLES = ["rotate-[-1.5deg]", "rotate-[1.5deg]", "rotate-[-2deg]", "rotate-[2deg]"];
+
+export async function sqlAddTestimonial(input: {
+  customer_name: string;
+  role?: string;
+  rating?: number;
+  comment: string;
+  favorite_game?: string;
+  station_rig?: string;
+  status?: "approved" | "pending" | "hidden";
+}): Promise<SqlTestimonialRow> {
+  const db = await getSqlDatabase();
+  const id = `testimonial-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+  const created_at = new Date().toISOString();
+  const rating = Math.max(1, Math.min(5, Number(input.rating) || 5));
+  const role = input.role?.trim() || "Gamer";
+  const status = input.status || "approved";
+
+  // Pick balanced styling
+  const bg_color = TESTIMONIAL_COLORS[Math.floor(Math.random() * TESTIMONIAL_COLORS.length)];
+  const card_angle = TESTIMONIAL_ANGLES[Math.floor(Math.random() * TESTIMONIAL_ANGLES.length)];
+
+  db.run(
+    `INSERT INTO testimonials 
+    (id, customer_name, role, rating, comment, favorite_game, station_rig, status, is_featured, bg_color, card_angle, created_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?)`,
+    [
+      id,
+      input.customer_name.trim(),
+      role,
+      rating,
+      input.comment.trim(),
+      input.favorite_game?.trim() || "",
+      input.station_rig?.trim() || "",
+      status,
+      bg_color,
+      card_angle,
+      created_at,
+    ]
+  );
+  saveDatabaseToFile(db);
+
+  return {
+    id,
+    customer_name: input.customer_name.trim(),
+    role,
+    rating,
+    comment: input.comment.trim(),
+    favorite_game: input.favorite_game?.trim() || "",
+    station_rig: input.station_rig?.trim() || "",
+    status,
+    is_featured: 0,
+    bg_color,
+    card_angle,
+    created_at,
+  };
+}
+
+export async function sqlGetTestimonialById(id: string): Promise<SqlTestimonialRow | null> {
+  const db = await getSqlDatabase();
+  const res = db.exec("SELECT * FROM testimonials WHERE id = ?", [id]);
+  if (!res[0] || !res[0].values || !res[0].values[0]) return null;
+  const cols = res[0].columns;
+  const obj: any = {};
+  cols.forEach((col, i) => {
+    obj[col] = res[0].values[0][i];
+  });
+  return obj as SqlTestimonialRow;
+}
+
+export async function sqlUpdateTestimonialStatus(id: string, status: "approved" | "pending" | "hidden"): Promise<SqlTestimonialRow | null> {
+  const db = await getSqlDatabase();
+  db.run("UPDATE testimonials SET status = ? WHERE id = ?", [status, id]);
+  saveDatabaseToFile(db);
+  return await sqlGetTestimonialById(id);
+}
+
+export async function sqlToggleTestimonialFeatured(id: string, is_featured: boolean | number): Promise<SqlTestimonialRow | null> {
+  const db = await getSqlDatabase();
+  db.run("UPDATE testimonials SET is_featured = ? WHERE id = ?", [is_featured ? 1 : 0, id]);
+  saveDatabaseToFile(db);
+  return await sqlGetTestimonialById(id);
+}
+
+export async function sqlDeleteTestimonial(id: string): Promise<boolean> {
+  const db = await getSqlDatabase();
+  db.run("DELETE FROM testimonials WHERE id = ?", [id]);
+  saveDatabaseToFile(db);
+  return true;
 }

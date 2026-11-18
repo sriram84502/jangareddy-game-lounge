@@ -12,6 +12,7 @@ import {
   Mail,
   MapPin,
   MessageCircle,
+  MessageSquarePlus,
   Monitor,
   Navigation,
   Phone,
@@ -59,6 +60,8 @@ import {
   submitBookingRequest,
   checkSlotAvailabilityFn,
   getDaySlotsAvailabilityFn,
+  getPublicTestimonialsFn,
+  submitTestimonialFn,
 } from "@/lib/booking.functions";
 import { GAMES_LIST, GENRE_FILTERS, type GameItem } from "@/data/games";
 
@@ -311,6 +314,154 @@ const TESTIMONIALS = [
 function Index() {
   const sendBookingRequest = useServerFn(submitBookingRequest);
   const checkSlotFn = useServerFn(checkSlotAvailabilityFn);
+  const getPublicTestimonials = useServerFn(getPublicTestimonialsFn);
+  const submitTestimonial = useServerFn(submitTestimonialFn);
+
+  // Dynamic Testimonials & Review Form
+  const [testimonialsList, setTestimonialsList] = useState<any[]>(TESTIMONIALS);
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [reviewName, setReviewName] = useState("");
+  const [reviewRole, setReviewRole] = useState("");
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewHoverRating, setReviewHoverRating] = useState<number | null>(null);
+  const [reviewGame, setReviewGame] = useState("");
+  const [reviewRig, setReviewRig] = useState("");
+  const [reviewComment, setReviewComment] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    getPublicTestimonials()
+      .then((res: any) => {
+        if (isMounted && Array.isArray(res) && res.length > 0) {
+          const colors = [
+            "bg-gradient-to-b from-[#23C8F3] to-[#0284C7] text-black",
+            "bg-gradient-to-b from-[#A855F7] to-[#7E22CE] text-white",
+            "bg-gradient-to-b from-[#059669] to-[#047857] text-white",
+            "bg-gradient-to-b from-[#84CC16] to-[#4D7C0F] text-black",
+            "bg-gradient-to-b from-[#EC4899] to-[#BE185D] text-white",
+            "bg-gradient-to-b from-[#F59E0B] to-[#D97706] text-black",
+          ];
+          const angles = ["rotate-[-2deg]", "rotate-[1.5deg]", "rotate-[-1.5deg]", "rotate-[2deg]"];
+          const mapped = res.map((item: any, idx: number) => {
+            const bgColor = item.bg_color || colors[idx % colors.length];
+            const cardAngle = item.card_angle || angles[idx % angles.length];
+            const isDarkText = bgColor.includes("text-black");
+            const avatarBg = isDarkText ? "bg-black/20 text-black" : "bg-white/20 text-white";
+            const words = (item.customer_name || "Gamer").trim().split(/\s+/);
+            const initial =
+              words
+                .map((w: string) => w[0])
+                .filter(Boolean)
+                .slice(0, 2)
+                .join("")
+                .toUpperCase() || "GA";
+
+            return {
+              id: item.id,
+              name: item.customer_name,
+              role: item.role || "Gamer",
+              initial,
+              stars: Math.max(1, Math.min(5, Number(item.rating) || 5)),
+              bgColor,
+              cardAngle,
+              avatarBg,
+              text: item.comment,
+              favoriteGame: item.favorite_game,
+              stationRig: item.station_rig,
+              isFeatured: Boolean(item.is_featured),
+              createdAt: item.created_at,
+            };
+          });
+          setTestimonialsList(mapped);
+        }
+      })
+      .catch((err) => {
+        console.warn("Could not load public testimonials, falling back to seed", err);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  async function handleReviewSubmit(e: FormEvent) {
+    e.preventDefault();
+    if (!reviewName.trim()) {
+      toast.error("Please enter your name.");
+      return;
+    }
+    if (!reviewComment.trim() || reviewComment.trim().length < 5) {
+      toast.error("Please enter a review comment of at least 5 characters.");
+      return;
+    }
+
+    setSubmittingReview(true);
+    try {
+      const res = await submitTestimonial({
+        data: {
+          customerName: reviewName.trim(),
+          role: reviewRole.trim() || "Gamer",
+          rating: reviewRating,
+          comment: reviewComment.trim(),
+          favoriteGame: reviewGame.trim() || undefined,
+          stationRig: reviewRig.trim() || undefined,
+        },
+      });
+
+      if (res?.success && res.testimonial) {
+        const item = res.testimonial;
+        const colors = [
+          "bg-gradient-to-b from-[#23C8F3] to-[#0284C7] text-black",
+          "bg-gradient-to-b from-[#A855F7] to-[#7E22CE] text-white",
+          "bg-gradient-to-b from-[#059669] to-[#047857] text-white",
+          "bg-gradient-to-b from-[#84CC16] to-[#4D7C0F] text-black",
+        ];
+        const bgColor = item.bg_color || colors[0];
+        const isDarkText = bgColor.includes("text-black");
+        const words = (item.customer_name || "Gamer").trim().split(/\s+/);
+        const initial =
+          words
+            .map((w: string) => w[0])
+            .filter(Boolean)
+            .slice(0, 2)
+            .join("")
+            .toUpperCase() || "GA";
+
+        const newReview = {
+          id: item.id,
+          name: item.customer_name,
+          role: item.role || "Gamer",
+          initial,
+          stars: item.rating,
+          bgColor,
+          cardAngle: "rotate-0",
+          avatarBg: isDarkText ? "bg-black/20 text-black" : "bg-white/20 text-white",
+          text: item.comment,
+          favoriteGame: item.favorite_game,
+          stationRig: item.station_rig,
+          isFeatured: false,
+          createdAt: item.created_at,
+        };
+
+        setTestimonialsList((prev) => [newReview, ...prev]);
+        toast.success("🎉 Thank you! Your review is now live on Friendz Arena!");
+        setReviewModalOpen(false);
+        setReviewName("");
+        setReviewRole("");
+        setReviewGame("");
+        setReviewRig("");
+        setReviewComment("");
+        setReviewRating(5);
+      } else {
+        toast.error("Failed to submit review. Please try again.");
+      }
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to submit review.");
+    } finally {
+      setSubmittingReview(false);
+    }
+  }
   const [durationHours, setDurationHours] = useState<SessionDuration>(1);
   const [partySize, setPartySize] = useState(1);
   const [contactMethod, setContactMethod] = useState<"phone" | "whatsapp">("whatsapp");
@@ -1630,35 +1781,73 @@ function Index() {
             <p className="mx-auto mt-4 max-w-lg text-sm text-muted-foreground sm:text-base">
               Real feedback from local players who bring their friends to Friendz Arena.
             </p>
+
+            {/* Write a Review Button */}
+            <div className="mt-6 flex justify-center">
+              <button
+                type="button"
+                onClick={() => setReviewModalOpen(true)}
+                className="btn-chamfer bg-gradient-to-r from-[#FFB800] via-amber-400 to-[#23C8F3] px-6 py-3 font-display text-xs font-black uppercase tracking-wider text-black shadow-xl shadow-amber-500/20 hover:scale-105 transition-all flex items-center gap-2 cursor-pointer"
+              >
+                <MessageSquarePlus className="size-4" />
+                Write a Review / Share Feedback
+              </button>
+            </div>
           </div>
 
-          {/* 4 Tilted Teardrop / Pill Cards (Matching Reference) */}
+          {/* Dynamic Testimonials Grid */}
           <div className="mt-14 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {TESTIMONIALS.map((review) => (
+            {testimonialsList.map((review: any, idx: number) => (
               <div
-                key={review.name}
+                key={review.id || `${review.name}-${idx}`}
                 className={`relative flex flex-col justify-between rounded-[36px] p-6 shadow-2xl transition-transform duration-300 hover:rotate-0 hover:scale-105 ${review.bgColor} ${review.cardAngle}`}
               >
                 <div>
                   {/* Top user row */}
-                  <div className="flex items-center gap-3">
-                    <div
-                      className={`flex size-10 shrink-0 items-center justify-center rounded-full font-display text-xs font-black ${review.avatarBg}`}
-                    >
-                      {review.initial}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div
+                        className={`flex size-10 shrink-0 items-center justify-center rounded-full font-display text-xs font-black ${review.avatarBg}`}
+                      >
+                        {review.initial}
+                      </div>
+                      <div>
+                        <h3 className="font-display text-sm font-bold leading-tight truncate max-w-[150px]">
+                          {review.name}
+                        </h3>
+                        <p className="text-[11px] opacity-80 truncate max-w-[150px]">{review.role}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="font-display text-sm font-bold leading-tight">{review.name}</h3>
-                      <p className="text-[11px] opacity-80">{review.role}</p>
-                    </div>
+
+                    {review.isFeatured && (
+                      <span className="rounded-full bg-amber-400/30 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-amber-200 border border-amber-300/40">
+                        ⭐ Top
+                      </span>
+                    )}
                   </div>
 
                   {/* Stars */}
                   <div className="mt-3 flex gap-0.5">
-                    {[...Array(review.stars)].map((_, i) => (
+                    {[...Array(review.stars || 5)].map((_, i) => (
                       <Star key={i} className="size-3 fill-amber-300 text-amber-300" />
                     ))}
                   </div>
+
+                  {/* Tags for Game / Rig if available */}
+                  {(review.favoriteGame || review.stationRig) && (
+                    <div className="mt-2.5 flex flex-wrap gap-1.5">
+                      {review.favoriteGame && (
+                        <span className="rounded-md bg-black/20 px-2 py-0.5 text-[10px] font-bold">
+                          🎮 {review.favoriteGame}
+                        </span>
+                      )}
+                      {review.stationRig && (
+                        <span className="rounded-md bg-black/20 px-2 py-0.5 text-[10px] font-bold">
+                          ⚡ {review.stationRig.split("·")[0]?.trim()}
+                        </span>
+                      )}
+                    </div>
+                  )}
 
                   {/* Review Text */}
                   <p className="mt-3 text-xs leading-relaxed font-medium opacity-95">
@@ -1666,8 +1855,13 @@ function Index() {
                   </p>
                 </div>
 
-                <div className="mt-5 border-t border-current/15 pt-3 text-[10px] font-bold uppercase tracking-wider opacity-75">
-                  Verified Lounge Session
+                <div className="mt-5 border-t border-current/15 pt-3 flex items-center justify-between text-[10px] font-bold uppercase tracking-wider opacity-75">
+                  <span>Verified Lounge Session</span>
+                  {review.createdAt && (
+                    <span className="text-[9px] font-normal opacity-70">
+                      {new Date(review.createdAt).toLocaleDateString("en-IN", { month: "short", day: "numeric" })}
+                    </span>
+                  )}
                 </div>
               </div>
             ))}
@@ -2663,6 +2857,161 @@ function Index() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Write a Review / Comment Dialog */}
+      <Dialog open={reviewModalOpen} onOpenChange={setReviewModalOpen}>
+        <DialogContent className="border border-white/20 bg-[#070B24]/95 text-white sm:max-w-lg shadow-2xl backdrop-blur-2xl max-h-[92vh] overflow-y-auto">
+          <DialogHeader className="space-y-2">
+            <div className="flex items-center gap-3">
+              <div className="flex size-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#FFB800] to-[#23C8F3] text-black shadow-lg shadow-amber-500/20">
+                <MessageSquarePlus className="size-6 stroke-[2.5]" />
+              </div>
+              <div>
+                <DialogTitle className="font-display text-xl font-black uppercase tracking-wide text-white">
+                  Leave a Review
+                </DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground">
+                  Share your experience with 4K displays, DualSense Edge controllers, snacks, or games at Friendz Arena.
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          <form onSubmit={handleReviewSubmit} className="mt-4 space-y-4">
+            {/* Star Rating Picker */}
+            <div className="space-y-1.5 rounded-2xl border border-white/10 bg-white/5 p-4 text-center">
+              <Label className="text-xs font-bold uppercase tracking-wider text-white block mb-1">
+                Your Star Rating
+              </Label>
+              <div className="flex items-center justify-center gap-2">
+                {[1, 2, 3, 4, 5].map((star) => {
+                  const active = (reviewHoverRating !== null ? reviewHoverRating : reviewRating) >= star;
+                  return (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setReviewRating(star)}
+                      onMouseEnter={() => setReviewHoverRating(star)}
+                      onMouseLeave={() => setReviewHoverRating(null)}
+                      className="p-1 transition-transform hover:scale-125 focus:outline-none cursor-pointer"
+                      title={`${star} Star${star > 1 ? "s" : ""}`}
+                    >
+                      <Star
+                        className={`size-8 transition-colors ${
+                          active
+                            ? "fill-amber-400 text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.6)]"
+                            : "fill-transparent text-white/30"
+                        }`}
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-[11px] font-bold text-amber-300">
+                {(reviewHoverRating !== null ? reviewHoverRating : reviewRating) === 5
+                  ? "⭐⭐⭐⭐⭐ 5/5 — Phenomenal Gaming Experience!"
+                  : (reviewHoverRating !== null ? reviewHoverRating : reviewRating) === 4
+                  ? "⭐⭐⭐⭐ 4/5 — Really Great Session!"
+                  : (reviewHoverRating !== null ? reviewHoverRating : reviewRating) === 3
+                  ? "⭐⭐⭐ 3/5 — Good Experience"
+                  : (reviewHoverRating !== null ? reviewHoverRating : reviewRating) === 2
+                  ? "⭐⭐ 2/5 — Decent, Can Improve"
+                  : "⭐ 1/5 — Needs Work"}
+              </p>
+            </div>
+
+            {/* Name & Role Inputs */}
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold uppercase text-white">Your Name *</Label>
+                <Input
+                  required
+                  placeholder="e.g. Rahul Varma"
+                  value={reviewName}
+                  onChange={(e) => setReviewName(e.target.value)}
+                  className="rounded-xl border-white/10 bg-[#0E1538] text-white placeholder:text-muted-foreground"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold uppercase text-white">Gamer Tag / Role</Label>
+                <Input
+                  placeholder="e.g. FIFA Regular, Weekend Squad"
+                  value={reviewRole}
+                  onChange={(e) => setReviewRole(e.target.value)}
+                  className="rounded-xl border-white/10 bg-[#0E1538] text-white placeholder:text-muted-foreground"
+                />
+              </div>
+            </div>
+
+            {/* Favorite Game & Rig */}
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold uppercase text-white">Favorite Game Played</Label>
+                <Input
+                  placeholder="e.g. EA FC 24, Cricket 24, GTA V"
+                  value={reviewGame}
+                  onChange={(e) => setReviewGame(e.target.value)}
+                  className="rounded-xl border-white/10 bg-[#0E1538] text-white placeholder:text-muted-foreground"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-bold uppercase text-white">Station / Rig (Optional)</Label>
+                <select
+                  value={reviewRig}
+                  onChange={(e) => setReviewRig(e.target.value)}
+                  className="w-full h-10 rounded-xl border border-white/10 bg-[#0E1538] px-3 text-xs text-white focus:outline-none"
+                >
+                  <option value="">Any Station Console</option>
+                  <option value="Rig 01 · DualSense 1v1 Arena">Rig 01 · DualSense 1v1 Arena</option>
+                  <option value="Rig 02 · Vice City Ready">Rig 02 · Vice City Ready</option>
+                  <option value="Rig 03 · Fighting Colosseum">Rig 03 · Fighting Colosseum</option>
+                  <option value="Rig 04 · PlayStation Exclusives">Rig 04 · PlayStation Exclusives</option>
+                  <option value="Rig 05 · Co-op Squad Lounge">Rig 05 · Co-op Squad Lounge</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Review Comment Textarea */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-bold uppercase text-white">Your Review *</Label>
+                <span className="text-[10px] text-muted-foreground">
+                  {reviewComment.length} / 600 characters
+                </span>
+              </div>
+              <textarea
+                required
+                rows={4}
+                maxLength={600}
+                placeholder="Tell other gamers what you enjoyed: 4K 120Hz displays, DualSense Edge vibration, competitive 1v1 FIFA, squad co-op, cold Red Bull & nachos..."
+                value={reviewComment}
+                onChange={(e) => setReviewComment(e.target.value)}
+                className="w-full rounded-2xl border border-white/10 bg-[#0E1538] p-3 text-xs text-white placeholder:text-muted-foreground focus:border-[#FFB800] focus:outline-none transition-colors"
+              />
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-white/10">
+              <button
+                type="button"
+                onClick={() => setReviewModalOpen(false)}
+                className="rounded-xl border border-white/20 bg-white/5 hover:bg-white/15 px-4 py-2.5 font-display text-xs font-bold uppercase tracking-wider text-muted-foreground hover:text-white cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={submittingReview}
+                className="btn-chamfer bg-gradient-to-r from-[#FFB800] to-amber-400 px-6 py-2.5 font-display text-xs font-black uppercase tracking-wider text-black shadow-lg shadow-amber-500/20 hover:scale-105 disabled:opacity-50 transition-all cursor-pointer flex items-center gap-1.5"
+              >
+                {submittingReview ? "Submitting..." : "Submit Review"}
+              </button>
+            </div>
+          </form>
         </DialogContent>
       </Dialog>
       {/* Floating Sticky WhatsApp Quick Action Button */}

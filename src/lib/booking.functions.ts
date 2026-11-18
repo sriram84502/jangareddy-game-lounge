@@ -860,3 +860,106 @@ export const adminCheckInBookingFn = createServerFn({ method: "POST" })
     await sqlCheckInBooking(data.bookingId);
     return { success: true };
   });
+
+// 22. Public: Get Approved Testimonials
+export const getPublicTestimonialsFn = createServerFn({ method: "GET" }).handler(async () => {
+  const { sqlGetPublicTestimonials } = await import("@/lib/db.server");
+  return await sqlGetPublicTestimonials();
+});
+
+// 23. Public: Submit Testimonial / Review Comment
+export const submitTestimonialFn = createServerFn({ method: "POST" })
+  .validator((input: {
+    customerName: string;
+    role?: string;
+    rating: number;
+    comment: string;
+    favoriteGame?: string;
+    stationRig?: string;
+  }) =>
+    z
+      .object({
+        customerName: z.string().trim().min(2, "Name must be at least 2 characters").max(50),
+        role: z.string().trim().max(40).optional(),
+        rating: z.number().min(1).max(5),
+        comment: z.string().trim().min(5, "Review must be at least 5 characters").max(600),
+        favoriteGame: z.string().trim().max(60).optional(),
+        stationRig: z.string().trim().max(60).optional(),
+      })
+      .parse(input)
+  )
+  .handler(async ({ data }) => {
+    const { sqlAddTestimonial } = await import("@/lib/db.server");
+    const testimonial = await sqlAddTestimonial({
+      customer_name: data.customerName,
+      role: data.role || "Gamer",
+      rating: data.rating,
+      comment: data.comment,
+      favorite_game: data.favoriteGame || "",
+      station_rig: data.stationRig || "",
+      status: "approved",
+    });
+    return { success: true, testimonial };
+  });
+
+// 24. Admin: Get All Testimonials
+export const adminGetTestimonialsFn = createServerFn({ method: "GET" })
+  .validator((input: { token: string }) => z.object({ token: z.string().min(1) }).parse(input))
+  .handler(async ({ data }) => {
+    if (!data.token) throw new Error("Unauthorized");
+    const { sqlGetAllTestimonialsAdmin } = await import("@/lib/db.server");
+    return await sqlGetAllTestimonialsAdmin();
+  });
+
+// 25. Admin: Update Testimonial Status (approved, pending, hidden)
+export const adminUpdateTestimonialStatusFn = createServerFn({ method: "POST" })
+  .validator((input: { token: string; id: string; status: "approved" | "pending" | "hidden" }) =>
+    z
+      .object({
+        token: z.string().min(1),
+        id: z.string().min(1),
+        status: z.enum(["approved", "pending", "hidden"]),
+      })
+      .parse(input)
+  )
+  .handler(async ({ data }) => {
+    if (!data.token) throw new Error("Unauthorized");
+    const { sqlUpdateTestimonialStatus } = await import("@/lib/db.server");
+    await sqlUpdateTestimonialStatus(data.id, data.status);
+    return { success: true };
+  });
+
+// 26. Admin: Toggle Pin / Featured on Testimonial
+export const adminToggleTestimonialFeaturedFn = createServerFn({ method: "POST" })
+  .validator((input: { token: string; id: string; isFeatured: boolean }) =>
+    z
+      .object({
+        token: z.string().min(1),
+        id: z.string().min(1),
+        isFeatured: z.boolean(),
+      })
+      .parse(input)
+  )
+  .handler(async ({ data }) => {
+    if (!data.token) throw new Error("Unauthorized");
+    const { sqlToggleTestimonialFeatured } = await import("@/lib/db.server");
+    await sqlToggleTestimonialFeatured(data.id, data.isFeatured ? 1 : 0);
+    return { success: true };
+  });
+
+// 27. Admin: Delete Testimonial
+export const adminDeleteTestimonialFn = createServerFn({ method: "POST" })
+  .validator((input: { token: string; id: string }) =>
+    z
+      .object({
+        token: z.string().min(1),
+        id: z.string().min(1),
+      })
+      .parse(input)
+  )
+  .handler(async ({ data }) => {
+    if (!data.token) throw new Error("Unauthorized");
+    const { sqlDeleteTestimonial } = await import("@/lib/db.server");
+    await sqlDeleteTestimonial(data.id);
+    return { success: true };
+  });

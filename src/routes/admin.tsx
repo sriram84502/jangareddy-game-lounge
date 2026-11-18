@@ -30,6 +30,7 @@ import {
   Lock,
   LogOut,
   MessageCircle,
+  MessageSquare,
   Phone,
   Plus,
   QrCode,
@@ -39,6 +40,7 @@ import {
   Search,
   ShieldAlert,
   Sparkles,
+  Star,
   Table,
   Tag,
   Trash2,
@@ -79,6 +81,10 @@ import {
   adminAutoAssignBookingFn,
   adminGetDayScheduleFn,
   adminCheckInBookingFn,
+  adminGetTestimonialsFn,
+  adminUpdateTestimonialStatusFn,
+  adminToggleTestimonialFeaturedFn,
+  adminDeleteTestimonialFn,
 } from "@/lib/booking.functions";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -103,6 +109,19 @@ const PS5_STATIONS = [
   "Rig 04 · PlayStation Exclusives",
   "Rig 05 · Co-op Squad Lounge",
 ];
+
+function getTodayDateString(): string {
+  try {
+    return new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Kolkata",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date());
+  } catch {
+    return new Date().toISOString().slice(0, 10);
+  }
+}
 
 function AdminPage() {
   const loginFn = useServerFn(adminLoginFn);
@@ -131,6 +150,10 @@ function AdminPage() {
   const autoAssignFn = useServerFn(adminAutoAssignBookingFn);
   const getDayScheduleFn = useServerFn(adminGetDayScheduleFn);
   const checkInBookingFn = useServerFn(adminCheckInBookingFn);
+  const getTestimonialsFn = useServerFn(adminGetTestimonialsFn);
+  const updateTestimonialStatusFn = useServerFn(adminUpdateTestimonialStatusFn);
+  const toggleTestimonialFeaturedFn = useServerFn(adminToggleTestimonialFeaturedFn);
+  const deleteTestimonialFn = useServerFn(adminDeleteTestimonialFn);
 
   // Auth State
   const [authToken, setAuthToken] = useState<string | null>(null);
@@ -141,22 +164,27 @@ function AdminPage() {
   const [authenticating, setAuthenticating] = useState(false);
 
   // Active Tab
-  type AdminTab = "timers" | "schedule" | "bookings" | "offline" | "games" | "pricing" | "snacks" | "passes" | "analytics";
+  type AdminTab =
+    | "timers"
+    | "schedule"
+    | "bookings"
+    | "offline"
+    | "games"
+    | "pricing"
+    | "snacks"
+    | "passes"
+    | "analytics"
+    | "reviews";
   const [activeTab, setActiveTab] = useState<AdminTab>("timers");
 
+  // Reviews & Comments Moderation State
+  const [testimonialsList, setTestimonialsList] = useState<any[]>([]);
+  const [loadingTestimonials, setLoadingTestimonials] = useState<boolean>(false);
+  const [testimonialStatusFilter, setTestimonialStatusFilter] = useState<"all" | "approved" | "pending" | "hidden">("all");
+  const [testimonialSearchQuery, setTestimonialSearchQuery] = useState("");
+
   // Playo-Style Date Schedule State
-  const [scheduleDate, setScheduleDate] = useState<string>(() => {
-    try {
-      return new Intl.DateTimeFormat("en-CA", {
-        timeZone: "Asia/Kolkata",
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-      }).format(new Date());
-    } catch {
-      return new Date().toISOString().slice(0, 10);
-    }
-  });
+  const [scheduleDate, setScheduleDate] = useState<string>(() => getTodayDateString());
   const [scheduleData, setScheduleData] = useState<any | null>(null);
   const [loadingSchedule, setLoadingSchedule] = useState<boolean>(false);
   const [scheduleFilter, setScheduleFilter] = useState<string>("all");
@@ -189,7 +217,7 @@ function AdminPage() {
     rig?: string;
     source?: "offline" | "whatsapp";
   }) {
-    const targetDate = params.date || scheduleDate || todayStr;
+    const targetDate = params.date || scheduleDate || getTodayDateString();
     const targetTime = params.time || "16:00";
     const targetRig = params.rig || "auto";
     const targetSource = params.source || "offline";
@@ -347,6 +375,56 @@ function AdminPage() {
     loadAnalytics();
     loadStationOrders();
     loadDaySchedule(scheduleDate);
+    loadTestimonials();
+  }
+
+  async function loadTestimonials() {
+    if (!authToken) return;
+    setLoadingTestimonials(true);
+    try {
+      const res = await getTestimonialsFn({ data: { token: authToken } });
+      if (Array.isArray(res)) {
+        setTestimonialsList(res);
+      }
+    } catch (err) {
+      console.error("Failed to load testimonials:", err);
+    } finally {
+      setLoadingTestimonials(false);
+    }
+  }
+
+  async function handleUpdateTestimonialStatus(id: string, status: "approved" | "pending" | "hidden") {
+    if (!authToken) return;
+    try {
+      await updateTestimonialStatusFn({ data: { token: authToken, id, status } });
+      toast.success(`Review status updated to ${status}!`);
+      loadTestimonials();
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to update review status.");
+    }
+  }
+
+  async function handleToggleTestimonialFeatured(id: string, currentFeatured: number) {
+    if (!authToken) return;
+    try {
+      await toggleTestimonialFeaturedFn({ data: { token: authToken, id, isFeatured: !currentFeatured } });
+      toast.success(currentFeatured ? "Review unpinned from top." : "⭐ Review pinned to top of testimonials!");
+      loadTestimonials();
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to toggle featured status.");
+    }
+  }
+
+  async function handleDeleteTestimonial(id: string) {
+    if (!authToken) return;
+    if (!window.confirm("Are you sure you want to permanently delete this customer review?")) return;
+    try {
+      await deleteTestimonialFn({ data: { token: authToken, id } });
+      toast.success("Review deleted successfully.");
+      loadTestimonials();
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to delete review.");
+    }
   }
 
   async function loadDaySchedule(targetDate?: string) {
@@ -416,6 +494,7 @@ function AdminPage() {
         setSlotBookingParty(1);
         setSlotBookingDuration(1);
         loadBookings();
+        setScheduleDate(finalDate);
         loadDaySchedule(finalDate);
       } else {
         setSlotBookingError((res as any)?.error || "Failed to create booking.");
@@ -1629,6 +1708,123 @@ function AdminPage() {
       </header>
 
       <div className="mx-auto max-w-7xl px-4 sm:px-8 pt-8">
+        {/* Desk Quick-Stats Bar for User-Friendly Overview */}
+        <div className="mb-6 grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-3">
+          <div className="rounded-2xl border border-white/10 bg-black/40 p-3.5 backdrop-blur-md">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
+              Active Stations
+            </span>
+            <div className="mt-1 flex items-center justify-between">
+              <span className="font-display text-lg font-black text-white">
+                {Object.values(stationTimers).filter((t: any) => t?.status === "active").length} / 5 Live
+              </span>
+              <span className="size-2 rounded-full bg-emerald-400 animate-pulse" />
+            </div>
+            <button
+              type="button"
+              onClick={() => setActiveTab("timers")}
+              className="mt-1 text-[10px] text-cyan-300 hover:underline block cursor-pointer"
+            >
+              Inspect Timers →
+            </button>
+          </div>
+
+          <div className="rounded-2xl border border-white/10 bg-black/40 p-3.5 backdrop-blur-md">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
+              Today's Slots
+            </span>
+            <div className="mt-1 flex items-center justify-between">
+              <span className="font-display text-lg font-black text-white">
+                {bookings.filter((b) => b.visit_date === todayStr).length} Bookings
+              </span>
+              <span className="rounded bg-blue-500/20 text-blue-300 px-1.5 py-0.2 text-[9px] font-bold uppercase">
+                {todayStr}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab("schedule");
+                loadDaySchedule(todayStr);
+              }}
+              className="mt-1 text-[10px] text-cyan-300 hover:underline block cursor-pointer"
+            >
+              Open Schedule →
+            </button>
+          </div>
+
+          <div className="rounded-2xl border border-white/10 bg-black/40 p-3.5 backdrop-blur-md">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
+              Pending Approvals
+            </span>
+            <div className="mt-1 flex items-center justify-between">
+              <span className="font-display text-lg font-black text-amber-400">
+                {bookings.filter((b) => b.status === "pending").length} Pending
+              </span>
+              {bookings.filter((b) => b.status === "pending").length > 0 && (
+                <span className="size-2 rounded-full bg-amber-400 animate-ping" />
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => setActiveTab("bookings")}
+              className="mt-1 text-[10px] text-amber-300 hover:underline block cursor-pointer"
+            >
+              Review Requests →
+            </button>
+          </div>
+
+          <div className="rounded-2xl border border-white/10 bg-black/40 p-3.5 backdrop-blur-md">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
+              Customer Reviews
+            </span>
+            <div className="mt-1 flex items-center justify-between">
+              <span className="font-display text-lg font-black text-[#FFB800] flex items-center gap-1">
+                <Star className="size-3.5 fill-current" />
+                {testimonialsList.filter((t) => t.status === "approved").length} Live
+              </span>
+              {testimonialsList.filter((t) => t.status === "pending").length > 0 && (
+                <span className="rounded-full bg-red-500 text-white px-1.5 py-0.2 text-[9px] font-black animate-pulse">
+                  {testimonialsList.filter((t) => t.status === "pending").length} new
+                </span>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveTab("reviews");
+                loadTestimonials();
+              }}
+              className="mt-1 text-[10px] text-cyan-300 hover:underline block cursor-pointer"
+            >
+              Moderate Reviews →
+            </button>
+          </div>
+
+          <div className="col-span-2 sm:col-span-4 lg:col-span-1 rounded-2xl border border-white/10 bg-black/40 p-3.5 backdrop-blur-md">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
+              Quick Action
+            </span>
+            <div className="mt-1.5 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => openQuickWalkIn("auto")}
+                className="flex-1 rounded-xl bg-emerald-500 hover:bg-emerald-400 py-1.5 px-2 text-[10px] font-black uppercase text-black flex items-center justify-center gap-1 shadow-md shadow-emerald-500/20 cursor-pointer"
+              >
+                <Plus className="size-3" /> Walk-in
+              </button>
+              <button
+                type="button"
+                onClick={() => refreshAll()}
+                className="rounded-xl border border-white/20 bg-white/5 hover:bg-white/15 p-1.5 text-white cursor-pointer"
+                title="Refresh All Data"
+              >
+                <RefreshCw className="size-3.5" />
+              </button>
+            </div>
+          </div>
+        </div>
+
         {/* Navigation Tabs Bar */}
         <div className="flex flex-wrap items-center gap-2 border-b border-white/10 pb-4">
           <button
@@ -1740,6 +1936,26 @@ function AdminPage() {
             }`}
           >
             <TrendingUp className="size-3.5" /> Revenue Analytics
+          </button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab("reviews");
+              loadTestimonials();
+            }}
+            className={`flex items-center gap-2 rounded-xl px-4 py-2 font-display text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+              activeTab === "reviews"
+                ? "bg-gradient-to-r from-amber-400 via-amber-500 to-[#FFB800] text-black shadow-lg shadow-amber-500/20 font-black"
+                : "border border-white/10 bg-white/5 text-muted-foreground hover:text-white"
+            }`}
+          >
+            <Star className="size-3.5 fill-current" /> Reviews ({testimonialsList.length})
+            {testimonialsList.filter((t) => t.status === "pending").length > 0 && (
+              <span className="rounded-full bg-red-500 text-white px-1.5 py-0.2 text-[9px] font-black animate-pulse">
+                {testimonialsList.filter((t) => t.status === "pending").length} new
+              </span>
+            )}
           </button>
         </div>
 
@@ -2562,62 +2778,74 @@ function AdminPage() {
                                       key={r.rig}
                                       className="rounded-xl border border-white/10 bg-black/50 p-4 space-y-2.5 hover:border-white/20 transition-all"
                                     >
-                                      <div className="flex items-center justify-between">
-                                        <span className="font-display text-xs font-black uppercase text-white truncate max-w-[200px]">
-                                          {r.rig}
-                                        </span>
-                                        <span
-                                          className={`rounded-full px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider ${
-                                            r.source === "online"
-                                              ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40"
-                                              : r.source === "whatsapp"
-                                              ? "bg-amber-400/20 text-amber-300 border border-amber-400/40"
-                                              : "bg-purple-500/20 text-purple-300 border border-purple-500/40"
-                                          }`}
-                                        >
-                                          {r.source === "online"
-                                            ? "🌐 Online Booking"
-                                            : r.source === "whatsapp"
-                                            ? "💬 WhatsApp"
-                                            : "🏬 Store Walk-in"}
-                                        </span>
-                                      </div>
-
-                                      <div className="flex flex-wrap items-center justify-between text-xs gap-1">
-                                        <div>
-                                          <p className="font-bold text-white">{r.customerName}</p>
-                                          <p className="text-[11px] text-muted-foreground">{r.phone}</p>
-                                        </div>
-                                        <div className="text-right">
-                                          <p className="text-cyan-300 font-semibold">
-                                            {r.partySize}P · {r.durationHours}h ({r.bookedRange || currentSlot.time})
-                                          </p>
+                                      <div
+                                        className="cursor-pointer group"
+                                        onClick={() => {
+                                          setSelectedGridBooking({
+                                            ...r,
+                                            date: scheduleDate,
+                                            slotLabel: currentSlot.label,
+                                            slotTime: currentSlot.time,
+                                          });
+                                        }}
+                                      >
+                                        <div className="flex items-center justify-between">
+                                          <span className="font-display text-xs font-black uppercase text-white truncate max-w-[200px] group-hover:text-[#FFB800] transition-colors">
+                                            {r.rig}
+                                          </span>
                                           <span
-                                            className={`inline-block text-[10px] font-bold uppercase rounded px-1.5 py-0.5 ${
-                                              r.status === "confirmed"
-                                                ? "bg-emerald-500/20 text-emerald-300"
-                                                : "bg-amber-400/20 text-amber-300"
+                                            className={`rounded-full px-2.5 py-0.5 text-[9px] font-black uppercase tracking-wider ${
+                                              r.source === "online"
+                                                ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40"
+                                                : r.source === "whatsapp"
+                                                ? "bg-amber-400/20 text-amber-300 border border-amber-400/40"
+                                                : "bg-purple-500/20 text-purple-300 border border-purple-500/40"
                                             }`}
                                           >
-                                            {r.status}
+                                            {r.source === "online"
+                                              ? "🌐 Online Booking"
+                                              : r.source === "whatsapp"
+                                              ? "💬 WhatsApp"
+                                              : "🏬 Store Walk-in"}
                                           </span>
                                         </div>
+
+                                        <div className="mt-2 flex flex-wrap items-center justify-between text-xs gap-1">
+                                          <div>
+                                            <p className="font-bold text-white group-hover:underline">{r.customerName}</p>
+                                            <p className="text-[11px] text-muted-foreground">{r.phone}</p>
+                                          </div>
+                                          <div className="text-right">
+                                            <p className="text-cyan-300 font-semibold">
+                                              {r.partySize}P · {r.durationHours}h ({r.bookedRange || currentSlot.time})
+                                            </p>
+                                            <span
+                                              className={`inline-block text-[10px] font-bold uppercase rounded px-1.5 py-0.5 ${
+                                                r.status === "confirmed"
+                                                  ? "bg-emerald-500/20 text-emerald-300"
+                                                  : "bg-amber-400/20 text-amber-300"
+                                              }`}
+                                            >
+                                              {r.status}
+                                            </span>
+                                          </div>
+                                        </div>
+
+                                        {r.notes && (
+                                          <p className="mt-2 text-[11px] text-white/70 italic border-l-2 border-white/20 pl-2">
+                                            Note: {r.notes}
+                                          </p>
+                                        )}
                                       </div>
 
-                                      {r.notes && (
-                                        <p className="text-[11px] text-white/70 italic border-l-2 border-white/20 pl-2">
-                                          Note: {r.notes}
-                                        </p>
-                                      )}
-
-                                      <div className="flex items-center gap-2 pt-2 border-t border-white/10">
+                                      <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-white/10">
                                         {r.status === "pending" && (
                                           <button
                                             type="button"
                                             onClick={() => handleStatusChange(r.bookingId, "confirmed", r.rig)}
                                             className="flex-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 py-1.5 text-xs font-bold text-black cursor-pointer text-center"
                                           >
-                                            Confirm Booking
+                                            Confirm
                                           </button>
                                         )}
                                         {scheduleData.isToday && r.status === "confirmed" && (
@@ -2631,8 +2859,45 @@ function AdminPage() {
                                         )}
                                         <button
                                           type="button"
+                                          onClick={() => {
+                                            const bk = bookings.find((b) => b.id === r.bookingId) || {
+                                              id: r.bookingId,
+                                              customer_name: r.customerName,
+                                              phone: r.phone,
+                                              station_rig: r.rig,
+                                              visit_date: scheduleDate,
+                                              visit_time: currentSlot.time,
+                                              duration_hours: r.durationHours || 1,
+                                              party_size: r.partySize || 1,
+                                              notes: r.notes || "",
+                                              status: r.status,
+                                            };
+                                            setReceiptBooking(bk);
+                                          }}
+                                          className="rounded-lg bg-[#FFB800] hover:bg-amber-300 px-2 py-1.5 text-xs font-bold text-black cursor-pointer flex items-center gap-1 shadow-sm"
+                                          title="Generate Bill / Invoice"
+                                        >
+                                          <Receipt className="size-3.5" /> Bill
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            setSelectedGridBooking({
+                                              ...r,
+                                              date: scheduleDate,
+                                              slotLabel: currentSlot.label,
+                                              slotTime: currentSlot.time,
+                                            });
+                                          }}
+                                          className="rounded-lg bg-white/10 hover:bg-white/20 border border-white/20 px-2 py-1.5 text-xs font-bold text-white cursor-pointer"
+                                          title="View Full Details"
+                                        >
+                                          Details
+                                        </button>
+                                        <button
+                                          type="button"
                                           onClick={() => handleStatusChange(r.bookingId, "cancelled")}
-                                          className="rounded-lg bg-red-950 hover:bg-red-900 border border-red-500/30 px-3 py-1.5 text-xs font-bold text-red-300 cursor-pointer"
+                                          className="rounded-lg bg-red-950 hover:bg-red-900 border border-red-500/30 px-2 py-1.5 text-xs font-bold text-red-300 cursor-pointer"
                                         >
                                           Cancel
                                         </button>
@@ -2643,11 +2908,10 @@ function AdminPage() {
                                             )}`}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="rounded-lg bg-emerald-600/30 hover:bg-emerald-600/50 border border-emerald-500/40 px-3 py-1.5 text-xs font-bold text-emerald-300 flex items-center gap-1.5"
+                                            className="rounded-lg bg-emerald-600/30 hover:bg-emerald-600/50 border border-emerald-500/40 px-2 py-1.5 text-xs font-bold text-emerald-300 flex items-center gap-1"
                                             title="Chat with Customer on WhatsApp"
                                           >
                                             <MessageCircle className="size-3.5" />
-                                            Chat
                                           </a>
                                         )}
                                       </div>
@@ -2766,7 +3030,13 @@ function AdminPage() {
                         </thead>
                         <tbody className="divide-y divide-white/5">
                           {scheduleData.slots.map((s: any) => {
-                            const occupied = s.rigs.filter((r: any) => r.isOccupied);
+                            const occupied = s.rigs.filter((r: any) => {
+                              if (!r.isOccupied) return false;
+                              if (scheduleFilter === "online") return r.source === "online";
+                              if (scheduleFilter === "store") return r.source === "offline" || r.source === "store";
+                              if (scheduleFilter === "whatsapp") return r.source === "whatsapp";
+                              return true;
+                            });
                             const available = s.rigs.filter((r: any) => !r.isOccupied);
 
                             return (
@@ -2823,26 +3093,36 @@ function AdminPage() {
                                   {occupied.length > 0 ? (
                                     <div className="flex flex-wrap gap-1.5">
                                       {occupied.map((r: any) => (
-                                        <span
+                                        <button
                                           key={r.rig}
-                                          className={`inline-flex items-center gap-1 rounded-lg px-2 py-1 text-[10px] font-bold border ${
+                                          type="button"
+                                          onClick={() => {
+                                            setSelectedGridBooking({
+                                              ...r,
+                                              date: scheduleDate,
+                                              slotLabel: s.label,
+                                              slotTime: s.time,
+                                            });
+                                          }}
+                                          className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[10px] font-bold border transition-transform hover:scale-105 cursor-pointer shadow-sm ${
                                             r.source === "online"
-                                              ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/40"
+                                              ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/40 hover:bg-cyan-500/30"
                                               : r.source === "whatsapp"
-                                              ? "bg-amber-400/20 text-amber-300 border-amber-400/40"
-                                              : "bg-purple-500/20 text-purple-300 border-purple-500/40"
+                                              ? "bg-amber-400/20 text-amber-300 border-amber-400/40 hover:bg-amber-400/30"
+                                              : "bg-purple-500/20 text-purple-300 border-purple-500/40 hover:bg-purple-500/30"
                                           }`}
+                                          title="Click to view details, invoice, or check in"
                                         >
                                           <span>{r.source === "online" ? "🌐" : r.source === "whatsapp" ? "💬" : "🏬"}</span>
                                           <span className="font-black">{r.rig.split("·")[0]?.trim()}:</span>
-                                          <span>{r.customerName}</span>
+                                          <span className="truncate max-w-[85px]">{r.customerName}</span>
                                           <span className="opacity-70">({r.partySize}P)</span>
-                                        </span>
+                                        </button>
                                       ))}
                                     </div>
                                   ) : (
                                     <span className="text-[11px] text-emerald-400/80 font-medium">
-                                      None booked (0/5)
+                                      {scheduleFilter !== "all" ? `No ${scheduleFilter} bookings` : "None booked (0/5)"}
                                     </span>
                                   )}
                                 </td>
@@ -2852,12 +3132,22 @@ function AdminPage() {
                                   {available.length > 0 ? (
                                     <div className="flex flex-wrap gap-1.5">
                                       {available.map((r: any) => (
-                                        <span
+                                        <button
                                           key={r.rig}
-                                          className="inline-flex items-center gap-1 rounded-lg bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 text-[10px] font-bold text-emerald-300"
+                                          type="button"
+                                          onClick={() =>
+                                            openSlotBookingModal({
+                                              date: scheduleDate,
+                                              time: s.time,
+                                              rig: r.rig,
+                                              source: scheduleFilter === "whatsapp" ? "whatsapp" : "offline",
+                                            })
+                                          }
+                                          className="inline-flex items-center gap-1 rounded-lg bg-emerald-500/15 border border-emerald-500/30 hover:bg-emerald-500/30 px-2 py-0.5 text-[10px] font-bold text-emerald-300 transition-all cursor-pointer"
+                                          title={`Click to book ${r.rig} for ${s.label}`}
                                         >
-                                          🟢 {r.rig.split("·")[0]?.trim()}
-                                        </span>
+                                          <span>+ 🟢 {r.rig.split("·")[0]?.trim()}</span>
+                                        </button>
                                       ))}
                                     </div>
                                   ) : (
@@ -3126,27 +3416,31 @@ function AdminPage() {
                       <div className="mt-3.5 grid gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
                         {slot.rigs.map((r: any) => {
                           const isOccupied = r.isOccupied;
-                          const matchesFilter =
-                            scheduleFilter === "all" ||
-                            (scheduleFilter === "online" && r.source === "online") ||
-                            (scheduleFilter === "store" && (r.source === "offline" || r.source === "store")) ||
-                            (scheduleFilter === "whatsapp" && r.source === "whatsapp") ||
-                            (!isOccupied && scheduleFilter === "all");
-
-                          if (!matchesFilter && isOccupied) {
-                            return null;
-                          }
+                          const isMatch =
+                            scheduleFilter === "all"
+                              ? true
+                              : isOccupied && (
+                                  (scheduleFilter === "online" && r.source === "online") ||
+                                  (scheduleFilter === "store" && (r.source === "offline" || r.source === "store")) ||
+                                  (scheduleFilter === "whatsapp" && r.source === "whatsapp")
+                                );
+                          const isDimmedOtherChannel = isOccupied && scheduleFilter !== "all" && !isMatch;
+                          const isDimmedFree = !isOccupied && scheduleFilter !== "all";
 
                           return (
                             <div
                               key={r.rig}
                               className={`rounded-2xl border p-3.5 flex flex-col justify-between transition-all ${
                                 isOccupied
-                                  ? r.source === "online"
-                                    ? "border-cyan-500/50 bg-cyan-950/30 text-white"
+                                  ? isDimmedOtherChannel
+                                    ? "border-white/10 bg-black/40 text-white/50 opacity-50"
+                                    : r.source === "online"
+                                    ? "border-cyan-500/50 bg-cyan-950/30 text-white shadow-lg shadow-cyan-950/40"
                                     : r.source === "whatsapp"
-                                    ? "border-amber-500/50 bg-amber-950/30 text-white"
-                                    : "border-purple-500/50 bg-purple-950/30 text-white"
+                                    ? "border-amber-500/50 bg-amber-950/30 text-white shadow-lg shadow-amber-950/40"
+                                    : "border-purple-500/50 bg-purple-950/30 text-white shadow-lg shadow-purple-950/40"
+                                  : isDimmedFree
+                                  ? "border-emerald-500/20 bg-emerald-950/10 text-white/70"
                                   : "border-emerald-500/30 bg-emerald-950/15 text-white hover:border-emerald-400/60"
                               }`}
                             >
@@ -3175,11 +3469,21 @@ function AdminPage() {
                                 </div>
 
                                 {isOccupied ? (
-                                  <div className="mt-2 text-xs space-y-1">
-                                    <p className="font-bold text-white truncate">{r.customerName}</p>
+                                  <div
+                                    className="mt-2 text-xs space-y-1 cursor-pointer group"
+                                    onClick={() => {
+                                      setSelectedGridBooking({
+                                        ...r,
+                                        date: scheduleDate,
+                                        slotLabel: slot.label,
+                                        slotTime: slot.time,
+                                      });
+                                    }}
+                                  >
+                                    <p className="font-bold text-white truncate group-hover:text-[#FFB800] transition-colors">{r.customerName}</p>
                                     <p className="text-[11px] text-muted-foreground truncate">{r.phone}</p>
                                     <p className="text-[11px] text-cyan-300 truncate">
-                                      {r.notes || r.gameGenre || "PS5 Deluxe"} ({r.partySize}P · {r.durationHours}h)
+                                      {r.partySize}P · {r.durationHours}h ({r.timeRange || slot.time})
                                     </p>
                                     <span
                                       className={`inline-block rounded px-1.5 py-0.5 text-[9px] font-bold uppercase ${
@@ -3202,7 +3506,7 @@ function AdminPage() {
                               {/* Slot Card Actions */}
                               <div className="mt-3 pt-2.5 border-t border-white/10 flex items-center gap-1.5">
                                 {isOccupied ? (
-                                  <div className="flex items-center gap-1 w-full">
+                                  <div className="flex flex-wrap items-center gap-1 w-full">
                                     {r.status === "pending" && (
                                       <button
                                         type="button"
@@ -3212,7 +3516,7 @@ function AdminPage() {
                                         Confirm
                                       </button>
                                     )}
-                                    {scheduleData.isToday && r.status === "confirmed" && (
+                                    {scheduleData?.isToday && r.status === "confirmed" && (
                                       <button
                                         type="button"
                                         onClick={() => handleCheckIn(r.bookingId)}
@@ -3223,10 +3527,47 @@ function AdminPage() {
                                     )}
                                     <button
                                       type="button"
-                                      onClick={() => handleStatusChange(r.bookingId, "cancelled")}
-                                      className="rounded bg-red-950 hover:bg-red-900 border border-red-500/30 px-2 py-1 text-[10px] font-bold text-red-300 cursor-pointer"
+                                      onClick={() => {
+                                        const bk = bookings.find((b) => b.id === r.bookingId) || {
+                                          id: r.bookingId,
+                                          customer_name: r.customerName,
+                                          phone: r.phone,
+                                          station_rig: r.rig,
+                                          visit_date: scheduleDate,
+                                          visit_time: slot.time,
+                                          duration_hours: r.durationHours || 1,
+                                          party_size: r.partySize || 1,
+                                          notes: r.notes || "",
+                                          status: r.status,
+                                        };
+                                        setReceiptBooking(bk);
+                                      }}
+                                      className="rounded bg-[#FFB800] hover:bg-amber-300 px-2 py-1 text-[10px] font-bold text-black cursor-pointer flex items-center gap-0.5"
+                                      title="Generate Bill / Invoice"
                                     >
-                                      Cancel
+                                      <Receipt className="size-3" />
+                                      Bill
+                                    </button>
+                                    {r.phone && (
+                                      <a
+                                        href={`https://wa.me/91${r.phone.replace(/\D/g, "")}?text=${encodeURIComponent(
+                                          `Hi ${r.customerName}, regarding your PS5 booking at Friendz Arena for ${r.rig} at ${slot.label}...`
+                                        )}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="rounded bg-emerald-600/30 hover:bg-emerald-600/50 border border-emerald-500/40 px-2 py-1 text-[10px] font-bold text-emerald-300 flex items-center justify-center"
+                                        title="Chat on WhatsApp"
+                                      >
+                                        <MessageCircle className="size-3" />
+                                      </a>
+                                    )}
+                                    <button
+                                      type="button"
+                                      onClick={() => handleStatusChange(r.bookingId, "cancelled")}
+                                      className="rounded bg-red-950 hover:bg-red-900 border border-red-500/30 px-1.5 py-1 text-[10px] font-bold text-red-300 cursor-pointer"
+                                      title="Cancel Booking"
+                                    >
+                                      ✕
                                     </button>
                                   </div>
                                 ) : (
@@ -3353,37 +3694,71 @@ function AdminPage() {
                           handleStatusChange(selectedGridBooking.bookingId, "confirmed", selectedGridBooking.rig);
                           setSelectedGridBooking(null);
                         }}
-                        className="flex-1 rounded-xl bg-emerald-500 hover:bg-emerald-400 py-2 text-xs font-bold text-black"
+                        className="flex-1 rounded-xl bg-emerald-500 hover:bg-emerald-400 py-2 text-xs font-bold text-black cursor-pointer"
                       >
                         Confirm Booking
                       </button>
                     )}
 
-                    {scheduleData.isToday && selectedGridBooking.status === "confirmed" && (
+                    {scheduleData?.isToday && selectedGridBooking.status === "confirmed" && (
                       <button
                         type="button"
                         onClick={() => {
                           handleCheckIn(selectedGridBooking.bookingId);
                           setSelectedGridBooking(null);
                         }}
-                        className="flex-1 rounded-xl bg-cyan-400 hover:bg-cyan-300 py-2 text-xs font-bold text-black"
+                        className="flex-1 rounded-xl bg-cyan-400 hover:bg-cyan-300 py-2 text-xs font-bold text-black cursor-pointer"
                       >
                         Check In (TV Live)
                       </button>
                     )}
 
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const bk = bookings.find((b) => b.id === selectedGridBooking.bookingId) || {
+                          id: selectedGridBooking.bookingId,
+                          customer_name: selectedGridBooking.customerName,
+                          phone: selectedGridBooking.phone,
+                          station_rig: selectedGridBooking.rig,
+                          visit_date: selectedGridBooking.date,
+                          visit_time: selectedGridBooking.slotTime || selectedGridBooking.slotLabel?.split(" ")[0] || "16:00",
+                          duration_hours: selectedGridBooking.durationHours || 1,
+                          party_size: selectedGridBooking.partySize || 1,
+                          notes: selectedGridBooking.notes || "",
+                          status: selectedGridBooking.status,
+                        };
+                        setSelectedGridBooking(null);
+                        setReceiptBooking(bk);
+                      }}
+                      className="rounded-xl bg-[#FFB800] hover:bg-amber-300 px-3 py-2 text-xs font-bold text-black flex items-center gap-1.5 cursor-pointer shadow-sm"
+                    >
+                      <Receipt className="size-3.5" />
+                      Bill / Invoice
+                    </button>
+
                     {selectedGridBooking.phone && (
-                      <a
-                        href={`https://wa.me/91${selectedGridBooking.phone.replace(/\D/g, "")}?text=${encodeURIComponent(
-                          `Hi ${selectedGridBooking.customerName}, regarding your booking at Friendz Arena for ${selectedGridBooking.rig} at ${selectedGridBooking.slotLabel}...`
-                        )}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="rounded-xl bg-emerald-600/30 hover:bg-emerald-600/50 border border-emerald-500/40 px-3 py-2 text-xs font-bold text-emerald-300 flex items-center gap-1.5"
-                      >
-                        <MessageCircle className="size-3.5" />
-                        Chat
-                      </a>
+                      <>
+                        <a
+                          href={`https://wa.me/91${selectedGridBooking.phone.replace(/\D/g, "")}?text=${encodeURIComponent(
+                            `Hi ${selectedGridBooking.customerName}, regarding your booking at Friendz Arena for ${selectedGridBooking.rig} at ${selectedGridBooking.slotLabel}...`
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="rounded-xl bg-emerald-600/30 hover:bg-emerald-600/50 border border-emerald-500/40 px-3 py-2 text-xs font-bold text-emerald-300 flex items-center gap-1.5"
+                        >
+                          <MessageCircle className="size-3.5" />
+                          WhatsApp
+                        </a>
+
+                        <a
+                          href={`tel:${selectedGridBooking.phone}`}
+                          className="rounded-xl bg-blue-600/30 hover:bg-blue-600/50 border border-blue-500/40 px-3 py-2 text-xs font-bold text-blue-300 flex items-center gap-1.5"
+                        >
+                          <Phone className="size-3.5" />
+                          Call
+                        </a>
+                      </>
                     )}
 
                     <button
@@ -3392,7 +3767,7 @@ function AdminPage() {
                         handleStatusChange(selectedGridBooking.bookingId, "cancelled");
                         setSelectedGridBooking(null);
                       }}
-                      className="rounded-xl bg-red-950 hover:bg-red-900 border border-red-500/30 px-3 py-2 text-xs font-bold text-red-300"
+                      className="rounded-xl bg-red-950 hover:bg-red-900 border border-red-500/30 px-3 py-2 text-xs font-bold text-red-300 cursor-pointer"
                     >
                       Cancel Booking
                     </button>
@@ -4244,6 +4619,317 @@ function AdminPage() {
                 </table>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* TAB 10: CUSTOMER TESTIMONIALS & REVIEWS MODERATION                        */}
+        {/* ========================================================================= */}
+        {activeTab === "reviews" && (
+          <div className="mt-8 space-y-6">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="rounded-full bg-amber-400/20 text-[#FFB800] border border-amber-400/30 text-[10px] px-2.5 py-0.5 font-bold uppercase tracking-wider">
+                    Community Feedback
+                  </span>
+                  <span className="text-xs text-muted-foreground">Friendz Arena Testimonials</span>
+                </div>
+                <h2 className="mt-1 font-display text-xl font-black uppercase text-white flex items-center gap-2">
+                  <span>Customer Reviews & Testimonials</span>
+                  <span className="text-amber-400 text-sm font-bold">({testimonialsList.length})</span>
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  Moderate customer feedback submitted on the website. Approve to publish on the homepage, pin top reviews, or hide inappropriate comments.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => loadTestimonials()}
+                  className="rounded-xl border border-white/20 bg-white/5 hover:bg-white/10 px-3 py-2 text-xs font-bold text-white flex items-center gap-1.5 cursor-pointer"
+                >
+                  <RefreshCw className={`size-3.5 ${loadingTestimonials ? "animate-spin" : ""}`} />
+                  Refresh
+                </button>
+              </div>
+            </div>
+
+            {/* Metric KPI Cards */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <div className="rounded-2xl border border-white/10 bg-[#081348]/60 p-4 backdrop-blur-xl">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Total Reviews</span>
+                <p className="mt-1 font-display text-2xl font-black text-white">{testimonialsList.length}</p>
+                <span className="text-[11px] text-muted-foreground">All-time submissions</span>
+              </div>
+
+              <div className="rounded-2xl border border-emerald-500/30 bg-emerald-950/20 p-4 backdrop-blur-xl">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-400">Live on Website</span>
+                <p className="mt-1 font-display text-2xl font-black text-emerald-300">
+                  {testimonialsList.filter((t) => t.status === "approved").length}
+                </p>
+                <span className="text-[11px] text-emerald-400/80">Approved & Visible</span>
+              </div>
+
+              <div className="rounded-2xl border border-amber-500/30 bg-amber-950/20 p-4 backdrop-blur-xl">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400">Pending Review</span>
+                <p className="mt-1 font-display text-2xl font-black text-amber-300">
+                  {testimonialsList.filter((t) => t.status === "pending").length}
+                </p>
+                <span className="text-[11px] text-amber-400/80">Awaiting Moderation</span>
+              </div>
+
+              <div className="rounded-2xl border border-purple-500/30 bg-purple-950/20 p-4 backdrop-blur-xl">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-purple-300">Avg Star Rating</span>
+                <p className="mt-1 font-display text-2xl font-black text-[#FFB800] flex items-center gap-1">
+                  <Star className="size-5 fill-current text-amber-400" />
+                  {testimonialsList.length > 0
+                    ? (testimonialsList.reduce((acc, t) => acc + (Number(t.rating) || 5), 0) / testimonialsList.length).toFixed(1)
+                    : "5.0"}
+                </p>
+                <span className="text-[11px] text-purple-200/70">
+                  {testimonialsList.filter((t) => Number(t.rating) === 5).length} Five-Star Reviews
+                </span>
+              </div>
+            </div>
+
+            {/* Filter and Search Bar */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-y border-white/10 py-3.5">
+              {/* Status Tabs */}
+              <div className="flex flex-wrap items-center gap-1.5">
+                {[
+                  { id: "all", label: `All (${testimonialsList.length})` },
+                  { id: "approved", label: `🟢 Approved (${testimonialsList.filter((t) => t.status === "approved").length})` },
+                  { id: "pending", label: `🟡 Pending (${testimonialsList.filter((t) => t.status === "pending").length})` },
+                  { id: "hidden", label: `⚪ Hidden (${testimonialsList.filter((t) => t.status === "hidden").length})` },
+                ].map((f) => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => setTestimonialStatusFilter(f.id as any)}
+                    className={`rounded-xl px-3 py-1.5 text-xs font-bold transition-all cursor-pointer ${
+                      testimonialStatusFilter === f.id
+                        ? "bg-[#FFB800] text-black shadow-md font-black"
+                        : "border border-white/10 bg-white/5 text-muted-foreground hover:text-white"
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Search Box */}
+              <div className="relative w-full sm:w-72">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+                <Input
+                  value={testimonialSearchQuery}
+                  onChange={(e) => setTestimonialSearchQuery(e.target.value)}
+                  placeholder="Search player, game, rig or comment..."
+                  className="pl-9 h-9 rounded-xl border-white/10 bg-black/40 text-xs text-white placeholder:text-white/40"
+                />
+              </div>
+            </div>
+
+            {/* Reviews Cards List */}
+            {loadingTestimonials ? (
+              <div className="p-12 text-center text-sm text-muted-foreground">
+                <RefreshCw className="size-6 animate-spin mx-auto mb-2 text-[#FFB800]" />
+                Loading testimonials...
+              </div>
+            ) : (() => {
+              const filtered = testimonialsList.filter((t) => {
+                // Status Filter
+                if (testimonialStatusFilter !== "all" && t.status !== testimonialStatusFilter) {
+                  return false;
+                }
+                // Search Query
+                if (testimonialSearchQuery.trim()) {
+                  const q = testimonialSearchQuery.toLowerCase();
+                  const nameMatch = (t.customer_name || "").toLowerCase().includes(q);
+                  const roleMatch = (t.role || "").toLowerCase().includes(q);
+                  const gameMatch = (t.favorite_game || "").toLowerCase().includes(q);
+                  const rigMatch = (t.station_rig || "").toLowerCase().includes(q);
+                  const commentMatch = (t.comment || "").toLowerCase().includes(q);
+                  return nameMatch || roleMatch || gameMatch || rigMatch || commentMatch;
+                }
+                return true;
+              });
+
+              if (filtered.length === 0) {
+                return (
+                  <div className="rounded-3xl border border-dashed border-white/10 p-12 text-center text-sm text-muted-foreground space-y-2">
+                    <p className="font-display text-base font-bold text-white">No reviews found</p>
+                    <p className="text-xs">No reviews match the current filter or search criteria.</p>
+                  </div>
+                );
+              }
+
+              return (
+                <div className="grid gap-4 md:grid-cols-2">
+                  {filtered.map((t) => {
+                    const isApproved = t.status === "approved";
+                    const isPending = t.status === "pending";
+                    const isHidden = t.status === "hidden";
+                    const isFeatured = Boolean(t.is_featured);
+
+                    return (
+                      <div
+                        key={t.id}
+                        className={`rounded-3xl border p-5 transition-all flex flex-col justify-between space-y-4 ${
+                          isFeatured
+                            ? "border-[#FFB800] bg-gradient-to-b from-[#1c183a] to-[#0a0d24] shadow-xl shadow-amber-500/10"
+                            : isPending
+                            ? "border-amber-500/40 bg-amber-950/15"
+                            : isApproved
+                            ? "border-emerald-500/30 bg-[#091336]/80"
+                            : "border-white/10 bg-black/40 opacity-70"
+                        }`}
+                      >
+                        {/* Card Header */}
+                        <div>
+                          <div className="flex items-start justify-between gap-3 border-b border-white/10 pb-3">
+                            <div className="flex items-center gap-3">
+                              <div className="size-10 rounded-2xl bg-gradient-to-br from-[#FFB800] to-amber-600 flex items-center justify-center font-display font-black text-black text-base shadow-md">
+                                {(t.customer_name || "G")[0].toUpperCase()}
+                              </div>
+                              <div>
+                                <div className="flex items-center gap-2">
+                                  <h4 className="font-display text-sm font-black text-white">
+                                    {t.customer_name}
+                                  </h4>
+                                  {isFeatured && (
+                                    <span className="rounded-full bg-[#FFB800]/20 text-[#FFB800] border border-[#FFB800]/40 px-2 py-0.2 text-[9px] font-black uppercase tracking-wider flex items-center gap-1">
+                                      <Star className="size-2.5 fill-current" /> Pinned
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-[11px] text-cyan-300 font-medium">
+                                  {t.role || "PS5 Gamer"}
+                                </p>
+                              </div>
+                            </div>
+
+                            <div className="flex flex-col items-end gap-1">
+                              {/* Rating Stars */}
+                              <div className="flex items-center gap-0.5">
+                                {[1, 2, 3, 4, 5].map((star) => (
+                                  <Star
+                                    key={star}
+                                    className={`size-3.5 ${
+                                      star <= (t.rating || 5)
+                                        ? "fill-amber-400 text-amber-400"
+                                        : "fill-white/10 text-white/20"
+                                    }`}
+                                  />
+                                ))}
+                              </div>
+
+                              {/* Status Badge */}
+                              <span
+                                className={`rounded px-2 py-0.5 text-[9px] font-black uppercase tracking-wider border ${
+                                  isApproved
+                                    ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                                    : isPending
+                                    ? "bg-amber-400/20 text-amber-300 border-amber-400/40"
+                                    : "bg-white/10 text-white/60 border-white/20"
+                                }`}
+                              >
+                                {isApproved ? "🟢 Live on Site" : isPending ? "🟡 Pending" : "⚪ Hidden"}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Comment Body */}
+                          <div className="pt-3">
+                            <p className="text-xs text-white/90 italic leading-relaxed bg-black/30 p-3 rounded-2xl border border-white/5">
+                              "{t.comment}"
+                            </p>
+                          </div>
+
+                          {/* Rig & Game Metadata Badges */}
+                          <div className="mt-3 flex flex-wrap items-center gap-2 text-[10px]">
+                            {t.favorite_game && (
+                              <span className="rounded-lg bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2 py-0.5 font-bold flex items-center gap-1">
+                                🎮 {t.favorite_game}
+                              </span>
+                            )}
+                            {t.station_rig && (
+                              <span className="rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-2 py-0.5 font-bold flex items-center gap-1">
+                                🕹️ {t.station_rig}
+                              </span>
+                            )}
+                            <span className="text-muted-foreground ml-auto">
+                              {t.created_at ? new Date(t.created_at).toLocaleDateString("en-IN") : "Recent"}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Card Moderation Actions */}
+                        <div className="pt-3 border-t border-white/10 flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-1.5">
+                            {isPending && (
+                              <button
+                                type="button"
+                                onClick={() => handleUpdateTestimonialStatus(t.id, "approved")}
+                                className="rounded-xl bg-emerald-500 hover:bg-emerald-400 px-3 py-1.5 text-xs font-bold text-black flex items-center gap-1 cursor-pointer shadow-md shadow-emerald-500/20"
+                              >
+                                <Check className="size-3 stroke-[3]" /> Approve & Publish
+                              </button>
+                            )}
+
+                            {isApproved && (
+                              <button
+                                type="button"
+                                onClick={() => handleUpdateTestimonialStatus(t.id, "hidden")}
+                                className="rounded-xl border border-white/20 bg-white/10 hover:bg-white/20 px-3 py-1.5 text-xs font-bold text-white flex items-center gap-1 cursor-pointer"
+                              >
+                                Hide from Site
+                              </button>
+                            )}
+
+                            {isHidden && (
+                              <button
+                                type="button"
+                                onClick={() => handleUpdateTestimonialStatus(t.id, "approved")}
+                                className="rounded-xl bg-emerald-500/30 hover:bg-emerald-500/50 border border-emerald-500/40 px-3 py-1.5 text-xs font-bold text-emerald-300 flex items-center gap-1 cursor-pointer"
+                              >
+                                <Check className="size-3" /> Unhide (Publish)
+                              </button>
+                            )}
+
+                            <button
+                              type="button"
+                              onClick={() => handleToggleTestimonialFeatured(t.id, t.is_featured)}
+                              className={`rounded-xl px-2.5 py-1.5 text-xs font-bold flex items-center gap-1 cursor-pointer transition-all ${
+                                isFeatured
+                                  ? "bg-[#FFB800] text-black shadow-md shadow-amber-500/20"
+                                  : "border border-amber-400/40 bg-amber-400/10 text-amber-300 hover:bg-amber-400/20"
+                              }`}
+                              title={isFeatured ? "Unpin review" : "Pin review to top"}
+                            >
+                              <Star className={`size-3 ${isFeatured ? "fill-current" : ""}`} />
+                              {isFeatured ? "Pinned" : "Pin to Top"}
+                            </button>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteTestimonial(t.id)}
+                            className="rounded-xl border border-red-500/30 bg-red-950/30 hover:bg-red-900/50 px-2.5 py-1.5 text-xs font-bold text-red-300 flex items-center gap-1 cursor-pointer"
+                            title="Delete Review Permanently"
+                          >
+                            <Trash2 className="size-3" />
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </div>
         )}
       </div>
