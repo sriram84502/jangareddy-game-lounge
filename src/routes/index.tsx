@@ -68,7 +68,7 @@ import { GAMES_LIST, GENRE_FILTERS, type GameItem } from "@/data/games";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { name: "viewport", content: "width=device-width, initial-scale=1, maximum-scale=5, viewport-fit=cover" },
+      { name: "viewport", content: "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" },
       { title: "Friendz Arena | Your Portal to Epic PS5 Gaming" },
       {
         name: "description",
@@ -816,11 +816,11 @@ function Index() {
         {/* Ambient Radial Cyber Lighting based on Logo Palette */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute left-[-10%] top-[-10%] -z-10 size-[36rem] rounded-full bg-[#23C8F3]/15 blur-[130px]"
+          className="pointer-events-none absolute left-0 top-0 -z-10 w-72 h-72 sm:size-[36rem] max-w-full rounded-full bg-[#23C8F3]/15 blur-[80px] sm:blur-[130px]"
         />
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute right-[-5%] top-[10%] -z-10 size-[38rem] rounded-full bg-[#8F58AF]/20 blur-[150px]"
+          className="pointer-events-none absolute right-0 top-[10%] -z-10 w-72 h-72 sm:size-[38rem] max-w-full rounded-full bg-[#8F58AF]/20 blur-[80px] sm:blur-[150px]"
         />
 
         <div className="mx-auto max-w-7xl px-4 sm:px-8">
@@ -1084,7 +1084,7 @@ function Index() {
       </section>
 
       {/* Stats Section: "FOR THE PLAYERS BY THE PLAYERS" (Matching Reference) */}
-      <section className="relative isolate border-b border-white/10 bg-[#0A0F2D] py-16 sm:py-20">
+      <section className="relative isolate w-full max-w-full overflow-hidden border-b border-white/10 bg-[#0A0F2D] py-16 sm:py-20">
         <div className="mx-auto max-w-7xl px-5 sm:px-8">
           <div className="grid gap-10 lg:grid-cols-12 lg:items-center">
             {/* Left Headline */}
@@ -1155,12 +1155,12 @@ function Index() {
       {/* Feature Section: "UNLEASH YOUR INNER GAMER" & GTA VI (Matching Reference) */}
       <section
         id="gta-6"
-        className="relative isolate overflow-hidden border-b border-white/10 bg-[#070B1E] py-16 sm:py-24"
+        className="relative isolate w-full max-w-full overflow-hidden border-b border-white/10 bg-[#070B1E] py-16 sm:py-24"
       >
         {/* Subtle Backdrop Glow */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute left-1/2 top-1/2 -z-10 size-[45rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-tr from-fuchsia-600/10 to-cyan-500/10 blur-[150px]"
+          className="pointer-events-none absolute left-1/2 top-1/2 -z-10 w-72 h-72 sm:size-[45rem] max-w-full -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-tr from-fuchsia-600/10 to-cyan-500/10 blur-[80px] sm:blur-[150px]"
         />
 
         <div className="mx-auto max-w-7xl px-5 sm:px-8">
@@ -1291,7 +1291,7 @@ function Index() {
       {/* "MEET OUR 5 PS5 ARENA RIGS" (Matching "MEET OUR ELITE TEAM" in Reference) */}
       <section
         id="stations"
-        className="relative isolate border-b border-white/10 bg-[#0A0F2D] py-16 sm:py-24"
+        className="relative isolate w-full max-w-full overflow-hidden border-b border-white/10 bg-[#0A0F2D] py-16 sm:py-24"
       >
         <div className="mx-auto max-w-7xl px-5 sm:px-8">
           <div className="text-center">
@@ -1372,7 +1372,7 @@ function Index() {
       </section>
 
       {/* Hourly Pricing Rates Table */}
-      <section id="rates" className="scroll-mt-8 border-b border-white/10 bg-[#070B1E] py-16 sm:py-24">
+      <section id="rates" className="scroll-mt-8 border-b border-white/10 bg-[#070B1E] py-16 sm:py-24 w-full max-w-full overflow-hidden">
         <div className="mx-auto max-w-7xl px-5 sm:px-8">
           <div className="mb-10 flex flex-wrap items-end justify-between gap-5">
             <div>
@@ -1388,7 +1388,52 @@ function Index() {
             </p>
           </div>
 
-          <div className="w-full max-w-full overflow-x-auto rounded-2xl border border-white/10 bg-[#0E1538]/60 backdrop-blur-md">
+          {/* Mobile-Only Responsive Rate Cards (Eliminates horizontal scrolling & layout overflow on phones) */}
+          <div className="grid gap-3 sm:hidden w-full max-w-full">
+            {GROUP_SIZES.map((people) => (
+              <div
+                key={people}
+                className="rounded-xl border border-white/10 bg-[#0E1538]/80 p-3.5 backdrop-blur-md"
+              >
+                <div className="flex items-center justify-between mb-2.5">
+                  <span className="font-display text-xs font-black uppercase text-white flex items-center gap-1.5">
+                    <span className="size-2 rounded-full bg-[#FFB800]" />
+                    {people} {people === 1 ? "Person (Solo)" : "People"}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold">
+                    Group Rate
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {SESSION_DURATIONS.map((hours) => (
+                    <button
+                      key={hours}
+                      type="button"
+                      className="flex flex-col items-center justify-center rounded-lg border border-white/10 bg-white/5 py-2 px-1 text-center transition-all hover:bg-[#FFB800] hover:text-black active:scale-95 cursor-pointer"
+                      onClick={() => {
+                        setPartySize(people);
+                        setDurationHours(hours);
+                        const bookEl = document.getElementById("book");
+                        if (bookEl) {
+                          bookEl.scrollIntoView({ behavior: "smooth" });
+                        }
+                      }}
+                    >
+                      <span className="text-[10px] text-muted-foreground font-semibold">
+                        {hours} {hours === 1 ? "Hr" : "Hrs"}
+                      </span>
+                      <span className="font-display text-sm font-black text-[#FFB800]">
+                        ₹{calculateSessionPrice(people, hours)}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop & Tablet Rates Table (min-w contained strictly on sm screens and up) */}
+          <div className="hidden sm:block w-full max-w-full overflow-x-auto rounded-2xl border border-white/10 bg-[#0E1538]/60 backdrop-blur-md">
             <table className="w-full min-w-[38rem] border-collapse text-left">
               <caption className="sr-only">
                 Total session prices in rupees by number of people and hours
@@ -1534,7 +1579,7 @@ function Index() {
       </section>
 
       {/* Genre Section */}
-      <section id="games" className="scroll-mt-8 border-b border-white/10 bg-[#0A0F2D] py-16 sm:py-24">
+      <section id="games" className="scroll-mt-8 w-full max-w-full overflow-hidden border-b border-white/10 bg-[#0A0F2D] py-16 sm:py-24">
         <div className="mx-auto max-w-7xl px-5 sm:px-8">
           <div className="max-w-2xl">
             <p className="font-display text-xs font-bold uppercase tracking-widest text-cyan-400">
@@ -1585,7 +1630,7 @@ function Index() {
       {/* Interactive Game Library */}
       <section
         id="game-library"
-        className="scroll-mt-8 border-b border-white/10 bg-[#070B1E] py-16 sm:py-24"
+        className="scroll-mt-8 w-full max-w-full overflow-hidden border-b border-white/10 bg-[#070B1E] py-16 sm:py-24"
       >
         <div className="mx-auto max-w-7xl px-5 sm:px-8">
           <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
@@ -1766,7 +1811,7 @@ function Index() {
       {/* Customer Testimonials: "WHAT PLAYERS ARE SAYING" (Matching Reference Tilted Pills) */}
       <section
         id="reviews"
-        className="relative isolate overflow-hidden border-b border-white/10 bg-[#0A0F2D] py-16 sm:py-24"
+        className="relative isolate w-full max-w-full overflow-hidden border-b border-white/10 bg-[#0A0F2D] py-16 sm:py-24"
       >
         <div className="mx-auto max-w-7xl px-5 sm:px-8">
           <div className="text-center">
@@ -1871,11 +1916,11 @@ function Index() {
       </section>
 
       {/* Quick Action Banner: "GAME ON. ANYTIME. ANYWHERE" (Matching Reference) */}
-      <section className="relative isolate overflow-hidden border-b border-white/10 bg-gradient-to-b from-[#070B1E] via-[#0E1538] to-[#070B1E] py-16 sm:py-24 text-center">
+      <section className="relative isolate w-full max-w-full overflow-hidden border-b border-white/10 bg-gradient-to-b from-[#070B1E] via-[#0E1538] to-[#070B1E] py-16 sm:py-24 text-center">
         {/* Glow ambient */}
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute left-1/2 top-1/2 -z-10 size-[40rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-fuchsia-600/10 blur-[130px]"
+          className="pointer-events-none absolute left-1/2 top-1/2 -z-10 w-72 h-72 sm:size-[40rem] max-w-full -translate-x-1/2 -translate-y-1/2 rounded-full bg-fuchsia-600/10 blur-[80px] sm:blur-[130px]"
         />
 
         <div className="mx-auto max-w-4xl px-5 sm:px-8">
@@ -2366,7 +2411,7 @@ function Index() {
               {/* Honeypot */}
               <div
                 aria-hidden="true"
-                className="absolute -left-[10000px] top-auto size-px overflow-hidden"
+                className="sr-only"
               >
                 <label htmlFor="website">Leave this field empty</label>
                 <input id="website" name="website" tabIndex={-1} autoComplete="off" />
@@ -2466,7 +2511,7 @@ function Index() {
       </section>
 
       {/* Visit & Contact Section with Interactive Maps */}
-      <section id="visit" className="scroll-mt-8 border-b border-white/10 bg-[#0A0F2D] py-16 sm:py-24">
+      <section id="visit" className="scroll-mt-8 w-full max-w-full overflow-hidden border-b border-white/10 bg-[#0A0F2D] py-16 sm:py-24">
         <div className="mx-auto max-w-7xl px-5 sm:px-8 space-y-10">
           {/* Section Header */}
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 border-b border-white/10 pb-8">
@@ -2705,7 +2750,7 @@ function Index() {
       </section>
 
       {/* Footer with Giant Watermark Typography (Matching Reference "NINJA" Watermark) */}
-      <footer className="relative isolate overflow-hidden bg-[#050819] pt-16 pb-12">
+      <footer className="relative isolate w-full max-w-full overflow-hidden bg-[#050819] pt-16 pb-12">
         {/* Giant Watermark Typography */}
         <div
           aria-hidden="true"
